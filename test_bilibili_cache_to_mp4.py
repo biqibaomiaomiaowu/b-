@@ -1,50 +1,48 @@
 import pytest
+from unittest.mock import patch
 from pathlib import Path
-from bilibili_cache_to_mp4 import find_cache_dirs
 
-def test_find_cache_dirs_path_not_exists(tmp_path):
-    non_existent_path = tmp_path / "does_not_exist"
-    with pytest.raises(FileNotFoundError, match="路径不存在"):
-        find_cache_dirs(non_existent_path)
+from bilibili_cache_to_mp4 import guess_ffprobe
 
-def test_find_cache_dirs_not_a_directory(tmp_path):
-    file_path = tmp_path / "test.txt"
-    file_path.touch()
-    with pytest.raises(NotADirectoryError, match="请输入目录路径"):
-        find_cache_dirs(file_path)
+def test_guess_ffprobe_with_explicit_calls_resolve_executable():
+    with patch("bilibili_cache_to_mp4.resolve_executable") as mock_resolve:
+        mock_resolve.return_value = "/path/to/explicit/ffprobe"
+        result = guess_ffprobe("/path/to/ffmpeg", "explicit_ffprobe")
+        assert result == "/path/to/explicit/ffprobe"
+        mock_resolve.assert_called_once_with("explicit_ffprobe", "ffprobe")
 
-def test_find_cache_dirs_direct_m4s(tmp_path):
-    # Setup directory with .m4s directly inside
-    m4s_file = tmp_path / "video.m4s"
-    m4s_file.touch()
+def test_guess_ffprobe_with_sibling_exists(tmp_path):
+    # Setup tmp_path with a fake ffmpeg and a fake ffprobe
+    ffmpeg_file = tmp_path / "ffmpeg.exe"
+    ffmpeg_file.touch()
 
-    result = find_cache_dirs(tmp_path)
-    assert result == [tmp_path]
+    ffprobe_file = tmp_path / "ffprobe.exe"
+    ffprobe_file.touch()
 
-def test_find_cache_dirs_nested_m4s(tmp_path):
-    # Setup directory with nested subdirectories containing .m4s
-    subdir1 = tmp_path / "b_subdir"
-    subdir1.mkdir()
-    (subdir1 / "audio.m4s").touch()
+    result = guess_ffprobe(str(ffmpeg_file), None)
+    assert result == str(ffprobe_file)
 
-    subdir2 = tmp_path / "a_subdir"
-    subdir2.mkdir()
-    (subdir2 / "video.m4s").touch()
+def test_guess_ffprobe_sibling_not_exists_fallback_to_which(tmp_path):
+    # Setup tmp_path with a fake ffmpeg but no ffprobe
+    ffmpeg_file = tmp_path / "ffmpeg.exe"
+    ffmpeg_file.touch()
 
-    subdir3 = tmp_path / "c_subdir_no_m4s"
-    subdir3.mkdir()
-    (subdir3 / "test.txt").touch()
+    with patch("bilibili_cache_to_mp4.shutil.which") as mock_which:
+        mock_which.return_value = "/system/path/ffprobe"
+        result = guess_ffprobe(str(ffmpeg_file), None)
+        assert result == "/system/path/ffprobe"
+        mock_which.assert_called_once_with("ffprobe")
 
-    result = find_cache_dirs(tmp_path)
-    # The result should be sorted by Path
-    assert result == [subdir2, subdir1]
+def test_guess_ffprobe_ffmpeg_not_exists_fallback_to_which():
+    with patch("bilibili_cache_to_mp4.shutil.which") as mock_which:
+        mock_which.return_value = "/system/path/ffprobe"
+        result = guess_ffprobe("/non_existent/ffmpeg", None)
+        assert result == "/system/path/ffprobe"
+        mock_which.assert_called_once_with("ffprobe")
 
-def test_find_cache_dirs_no_m4s(tmp_path):
-    # Setup directory with no .m4s files
-    (tmp_path / "test.txt").touch()
-    subdir1 = tmp_path / "subdir"
-    subdir1.mkdir()
-    (subdir1 / "image.jpg").touch()
-
-    result = find_cache_dirs(tmp_path)
-    assert result == []
+def test_guess_ffprobe_which_fails_returns_empty_string():
+    with patch("bilibili_cache_to_mp4.shutil.which") as mock_which:
+        mock_which.return_value = None
+        result = guess_ffprobe("/non_existent/ffmpeg", None)
+        assert result == ""
+        mock_which.assert_called_once_with("ffprobe")
