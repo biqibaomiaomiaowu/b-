@@ -5,6 +5,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 APP_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_ROOT = APP_ROOT / "frontend"
 FRONTEND_DIST_DIR = FRONTEND_ROOT / "dist"
+CACHE_CONVERTER_SCRIPT = APP_ROOT / "bilibili_cache_to_mp4.py"
 DEFAULT_CACHE_PATH = r"C:\Users\曹乐\Videos\bilibili"
 DEFAULT_BBDOWN = "BBDown"
 SYSTEM_DOTNET_ROOT = Path(r"C:\Program Files\dotnet")
