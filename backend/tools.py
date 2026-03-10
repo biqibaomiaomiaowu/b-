@@ -115,7 +115,7 @@ def probe_tool_version(tool_key: str, executable: Path) -> str:
 
     try:
         env = build_process_env(prefer_system_dotnet=(tool_key == "bbdown"))
-        result = subprocess.run(cmd, capture_output=True, text=True, check=False, timeout=3, env=env)
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False, timeout=3, env=env)
         output = result.stdout.strip() or result.stderr.strip()
         if not output:
             return ""
