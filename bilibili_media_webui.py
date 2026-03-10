@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import mimetypes
 import os
@@ -1978,7 +1979,8 @@ def resolve_executable_path(command: str) -> Path | None:
     return Path(found).resolve() if found else None
 
 
-def get_scoop_roots() -> list[Path]:
+@functools.lru_cache(maxsize=None)
+def get_scoop_roots() -> tuple[Path, ...]:
     roots: list[Path] = []
     for env_name in ("SCOOP", "SCOOP_GLOBAL"):
         value = os.environ.get(env_name, "").strip()
@@ -1997,7 +1999,7 @@ def get_scoop_roots() -> list[Path]:
         if key not in seen:
             seen.add(key)
             unique_roots.append(root)
-    return unique_roots
+    return tuple(unique_roots)
 
 
 def iter_tool_candidates(tool_key: str) -> list[Path]:
@@ -2005,6 +2007,7 @@ def iter_tool_candidates(tool_key: str) -> list[Path]:
     local_app_data = Path(os.environ.get("LOCALAPPDATA", ""))
     program_files = Path(os.environ.get("ProgramFiles", r"C:\Program Files"))
     program_files_x86 = Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"))
+    scoop_roots = get_scoop_roots()
     candidates: list[Path] = []
 
     if tool_key == "bbdown":
@@ -2014,7 +2017,7 @@ def iter_tool_candidates(tool_key: str) -> list[Path]:
                 home / ".dotnet" / "tools" / "BBDown",
             ]
         )
-        for root in get_scoop_roots():
+        for root in scoop_roots:
             candidates.extend(
                 [
                     root / "shims" / "BBDown.exe",
@@ -2023,7 +2026,7 @@ def iter_tool_candidates(tool_key: str) -> list[Path]:
             )
     elif tool_key in {"ffmpeg", "ffprobe"}:
         executable = f"{tool_key}.exe"
-        for root in get_scoop_roots():
+        for root in scoop_roots:
             candidates.extend(
                 [
                     root / "shims" / executable,
@@ -2037,7 +2040,7 @@ def iter_tool_candidates(tool_key: str) -> list[Path]:
             ]
         )
     elif tool_key == "aria2c":
-        for root in get_scoop_roots():
+        for root in scoop_roots:
             candidates.extend(
                 [
                     root / "shims" / "aria2c.exe",
@@ -2057,7 +2060,7 @@ def iter_tool_candidates(tool_key: str) -> list[Path]:
                 program_files_x86 / "GPAC" / "MP4Box.exe",
             ]
         )
-        for root in get_scoop_roots():
+        for root in scoop_roots:
             candidates.extend(
                 [
                     root / "shims" / "mp4box.exe",
