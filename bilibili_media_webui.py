@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import mimetypes
 import os
@@ -2319,6 +2320,16 @@ def clear_bbdown_login_data(bbdown_path: str) -> dict[str, object]:
     }
 
 
+def _process_single_target(payload: dict, index: int, target: str) -> dict[str, object]:
+    item_payload = dict(payload)
+    command, work_dir, option_result = build_bbdown_command(item_payload, target, for_info=False)
+    result = run_subprocess(command, cwd=work_dir, prefer_system_dotnet=True, disable_proxy=True)
+    result["normalized_url"] = target
+    result["index"] = index
+    result.update(option_result)
+    return result
+
+
 def run_batch_downloads(payload: dict) -> dict[str, object]:
     targets = split_batch_targets(str(payload.get("urls_text", "")))
     if not targets:
@@ -2344,31 +2355,36 @@ def run_batch_downloads(payload: dict) -> dict[str, object]:
     stderr_blocks: list[str] = []
     failed = 0
 
-    for index, target in enumerate(targets, start=1):
-        item_payload = dict(payload)
-        command, work_dir, option_result = build_bbdown_command(item_payload, target, for_info=False)
-        result = run_subprocess(command, cwd=work_dir, prefer_system_dotnet=True, disable_proxy=True)
-        result["normalized_url"] = target
-        result["index"] = index
-        result.update(option_result)
-        items.append(result)
-        command_lines.append(f"[{index}] {result['command']}")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        futures = []
+        for index, target in enumerate(targets, start=1):
+            futures.append(executor.submit(_process_single_target, payload, index, target))
 
-        stdout_text = str(result.get("stdout", "") or "").strip()
-        stderr_text = str(result.get("stderr", "") or "").strip()
-        error_text = str(result.get("error", "") or "").strip()
-        title = f"===== [{index}/{len(targets)}] {target} ====="
-        stdout_blocks.append(title + (f"\n{stdout_text}" if stdout_text else ""))
-        combined_error = stderr_text
-        if error_text and error_text not in combined_error:
-            combined_error = (combined_error + "\n" if combined_error else "") + error_text
-        if combined_error:
-            stderr_blocks.append(title + f"\n{combined_error}")
+        for future in futures:
+            result = future.result()
+            target = str(result.get("normalized_url", ""))
+            index = int(result.get("index", 0))
 
-        if result.get("returncode") != 0:
-            failed += 1
-            if not continue_on_error:
-                break
+            items.append(result)
+            command_lines.append(f"[{index}] {result.get('command', '')}")
+
+            stdout_text = str(result.get("stdout", "") or "").strip()
+            stderr_text = str(result.get("stderr", "") or "").strip()
+            error_text = str(result.get("error", "") or "").strip()
+            title = f"===== [{index}/{len(targets)}] {target} ====="
+            stdout_blocks.append(title + (f"\n{stdout_text}" if stdout_text else ""))
+            combined_error = stderr_text
+            if error_text and error_text not in combined_error:
+                combined_error = (combined_error + "\n" if combined_error else "") + error_text
+            if combined_error:
+                stderr_blocks.append(title + f"\n{combined_error}")
+
+            if result.get("returncode") != 0:
+                failed += 1
+                if not continue_on_error:
+                    for pending_future in futures:
+                        pending_future.cancel()
+                    break
 
     processed = len(items)
     skipped = len(targets) - processed
