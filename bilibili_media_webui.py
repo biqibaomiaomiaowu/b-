@@ -2716,7 +2716,14 @@ class Handler(BaseHTTPRequestHandler):
         return data if isinstance(data, dict) else None
 
     def _send_common_headers(self) -> None:
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin")
+        if origin:
+            parsed_origin = urlparse(origin)
+            allowed_hosts = {"127.0.0.1", "localhost", "::1"}
+            if parsed_origin.hostname in allowed_hosts:
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Vary", "Origin")
+
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 
