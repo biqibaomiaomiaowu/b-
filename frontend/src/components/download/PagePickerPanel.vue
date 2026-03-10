@@ -64,117 +64,96 @@ function invertSelection() {
 </script>
 
 <template>
-  <section v-if="props.items.length" class="sub-panel">
-    <div class="sub-head">
+  <v-card v-if="props.items.length" variant="outlined" class="rounded-lg pa-4 picker-card">
+    <div class="d-flex justify-space-between align-start mb-3">
       <div>
-        <h3 class="sub-title">分 P / 剧集可视化选择</h3>
-        <p class="sub-text">已选择 {{ selectedCount }}/{{ props.items.length }} 项。</p>
+        <div class="text-subtitle-1 font-weight-bold">分 P / 剧集选择</div>
+        <div class="text-caption text-medium-emphasis">已选择 {{ selectedCount }}/{{ props.items.length }} 项。</div>
       </div>
-      <button class="secondary" type="button" @click="emit('refresh')">重新解析列表</button>
+      <v-btn variant="tonal" size="small" color="primary" @click="emit('refresh')">重新解析列表</v-btn>
     </div>
 
-    <StatusBanner :text="hintText" kind="ok" />
-
-    <div class="actions">
-      <button class="secondary" type="button" @click="selectAll">全选</button>
-      <button class="secondary" type="button" @click="clearAll">清空</button>
-      <button class="secondary" type="button" @click="invertSelection">反选</button>
+    <div class="mb-3">
+      <StatusBanner :text="hintText" kind="ok" />
     </div>
 
-    <div class="picker-grid">
-      <label v-for="item in props.items" :key="item.index" class="picker-item">
-        <input :checked="selectedIndexes.has(item.index)" type="checkbox" @change="handleCheckboxChange(item.index, $event)" />
-        <div class="picker-text">
-          <strong>{{ item.label || `${item.index}. ${item.title}` }}</strong>
-          <small>{{ item.subtitle || item.title }}</small>
-        </div>
-      </label>
+    <div class="d-flex flex-wrap gap-2 mb-4">
+      <v-btn variant="outlined" size="small" @click="selectAll">全选</v-btn>
+      <v-btn variant="outlined" size="small" @click="clearAll">清空</v-btn>
+      <v-btn variant="outlined" size="small" @click="invertSelection">反选</v-btn>
     </div>
-  </section>
+
+    <v-row dense class="picker-grid">
+      <v-col v-for="item in props.items" :key="item.index" cols="12" sm="6" lg="4">
+        <v-card
+          variant="flat"
+          class="pa-2 h-100 rounded border picker-item"
+          :class="{'border-primary bg-primary-subtle': selectedIndexes.has(item.index), 'bg-surface-variant': !selectedIndexes.has(item.index)}"
+          @click="handleCheckboxChange(item.index, { target: { checked: !selectedIndexes.has(item.index) } } as any)"
+          style="cursor: pointer;"
+        >
+          <div class="d-flex align-start gap-2">
+            <v-checkbox-btn
+              :model-value="selectedIndexes.has(item.index)"
+              color="primary"
+              density="compact"
+              class="mt-1"
+              readonly
+            ></v-checkbox-btn>
+            <div class="flex-grow-1 overflow-hidden">
+              <div class="text-body-2 font-weight-bold text-truncate" :title="item.label || `${item.index}. ${item.title}`">
+                {{ item.label || `${item.index}. ${item.title}` }}
+              </div>
+              <div class="text-caption text-medium-emphasis text-truncate" :title="item.subtitle || item.title">
+                {{ item.subtitle || item.title }}
+              </div>
+            </div>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-card>
 </template>
 
 <style scoped>
-.sub-panel {
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(246, 250, 255, 0.72));
-  border: 1px solid rgba(34, 67, 96, 0.1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
-}
-
-.sub-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: flex-start;
-}
-
-.sub-title {
-  margin: 0 0 6px;
-  font-size: 18px;
-}
-
-.sub-text {
-  margin: 0;
-  color: var(--muted);
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.secondary {
-  min-height: 42px;
-  padding: 0 16px;
-  border-radius: 999px;
-  border: 1px solid var(--panel-border);
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--text);
-}
-
-.picker-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
+.picker-card {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  background: rgba(var(--v-theme-surface), 0.6);
 }
 
 .picker-item {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(34, 67, 96, 0.08);
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  transition: all 0.2s ease;
 }
 
 .picker-item:hover {
-  transform: translateY(-1px);
-  border-color: rgba(14, 91, 216, 0.18);
-  box-shadow: 0 14px 28px rgba(29, 56, 79, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--v-theme-on-surface), 0.08);
 }
 
-.picker-item input {
-  margin-top: 4px;
+.bg-primary-subtle {
+  background-color: rgba(var(--v-theme-primary), 0.05) !important;
 }
 
-.picker-text {
-  display: grid;
-  gap: 6px;
+.border-primary {
+  border-color: rgba(var(--v-theme-primary), 0.5) !important;
 }
 
-.picker-text small {
-  color: var(--muted);
+.gap-2 {
+  gap: 8px;
 }
 
-@media (max-width: 760px) {
-  .sub-head {
-    flex-direction: column;
-  }
+.picker-grid {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 改善滚动条样式 */
+.picker-grid::-webkit-scrollbar {
+  width: 6px;
+}
+.picker-grid::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(var(--v-theme-on-surface), 0.2);
 }
 </style>

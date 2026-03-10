@@ -56,450 +56,291 @@ function toggleAdvancedMode() {
 </script>
 
 <template>
-  <section class="panel-card">
-    <div class="panel-head">
-      <div>
-        <p class="eyebrow">模式二</p>
-        <h2 class="title">视频链接下载</h2>
-        <p class="summary">围绕 BBDown 的单链接工作流，覆盖账号状态、清晰度、分 P 与高级参数。</p>
+  <v-card class="h-100 rounded-lg top-accent-line panel-card" flat>
+    <v-card-text>
+      <div class="d-flex justify-space-between align-start mb-4">
+        <div>
+          <div class="text-overline text-medium-emphasis">模式二</div>
+          <div class="text-h6 font-weight-bold">视频链接下载</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">围绕 BBDown 的单链接工作流，覆盖账号状态、清晰度、分 P 与高级参数。</div>
+        </div>
+        <v-chip size="small" color="primary" variant="tonal" class="font-weight-bold">BBDown 工作流</v-chip>
       </div>
-      <span class="tag">BBDown 工作流</span>
-    </div>
 
-    <LoginStatusCard
-      :login-status="props.loginStatus"
-      @refresh="emit('refreshLogin')"
-      @login-web="emit('loginWeb')"
-      @login-tv="emit('loginTv')"
-      @clear="emit('clearLogin')"
-    />
+      <LoginStatusCard
+        :login-status="props.loginStatus"
+        class="mb-4"
+        @refresh="emit('refreshLogin')"
+        @login-web="emit('loginWeb')"
+        @login-tv="emit('loginTv')"
+        @clear="emit('clearLogin')"
+      />
 
-    <ToolStatusPanel :detection="props.toolDetection" @detect="emit('detectTools')" />
+      <ToolStatusPanel :detection="props.toolDetection" class="mb-6" @detect="emit('detectTools')" />
 
-    <form class="panel-form" @submit.prevent="emit('runDownload')">
-      <p class="section-label">基础参数</p>
+      <v-form @submit.prevent="emit('runDownload')">
+        <div class="text-subtitle-2 font-weight-bold mb-3 text-primary">基础参数</div>
 
-      <div class="field">
-        <label class="field-label" for="video-url">B 站视频链接</label>
-        <input
-          id="video-url"
+        <v-text-field
           v-model="form.videoUrl"
-          class="field-input"
-          type="text"
+          label="B 站视频链接"
           placeholder="例如：https://www.bilibili.com/video/BV..."
           required
+          variant="outlined"
+          density="compact"
+          hint="支持直接粘贴分享文本、纯链接或 BV / av / ep / ss 编号，失焦时会自动识别。"
+          persistent-hint
+          class="mb-3"
           @blur="normalizeVideoUrl"
           @paste="handlePaste"
-        />
-        <p class="field-help">支持直接粘贴分享文本、纯链接或 BV / av / ep / ss 编号，失焦时会自动识别。</p>
-      </div>
+        ></v-text-field>
 
-      <div class="field-grid">
-        <div class="field">
-          <label class="field-label" for="download-output">下载目录</label>
-          <input id="download-output" v-model="form.output" class="field-input" type="text" placeholder="留空则下载到当前仓库目录" />
+        <v-row dense class="mb-1">
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="form.output"
+              label="下载目录"
+              placeholder="留空则下载到当前仓库目录"
+              variant="outlined"
+              density="compact"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="form.bbdownPath"
+              label="BBDown 路径"
+              variant="outlined"
+              density="compact"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+
+        <v-row dense class="mb-1">
+          <v-col cols="12" md="6">
+            <v-select
+              v-model="form.qualitySelect"
+              :items="qualitySelectOptions"
+              label="清晰度"
+              variant="outlined"
+              density="compact"
+            ></v-select>
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="form.qualityCustom"
+              label="自定义清晰度文本"
+              placeholder="例如：1080P 高码率"
+              variant="outlined"
+              density="compact"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+
+        <v-text-field
+          v-model="form.pageSpec"
+          label="分 P / 剧集范围"
+          placeholder="留空=默认；全集填 ALL；也支持 1-5、1,3,7、LAST"
+          variant="outlined"
+          density="compact"
+          hint="适用于多 P、合集、番剧、课程等，支持 ALL、LAST、1-5、1,3,7。"
+          persistent-hint
+          class="mb-2"
+        ></v-text-field>
+
+        <v-switch
+          v-model="form.showAllPages"
+          label="获取信息时显示全部分 P / 剧集列表"
+          color="primary"
+          density="compact"
+          class="mb-3"
+          hide-details
+        ></v-switch>
+
+        <PagePickerPanel v-model="form.pageSpec" :items="props.pageItems" :meta="props.pageMeta" class="mb-4" @refresh="emit('fetchInfo')" />
+
+        <div class="mb-4">
+          <v-btn variant="text" size="small" color="medium-emphasis" @click="toggleAdvancedMode">
+            <v-icon start>{{ form.advancedOpen ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+            {{ form.advancedOpen ? '收起高级选项' : '展开高级选项' }}
+          </v-btn>
         </div>
 
-        <div class="field">
-          <label class="field-label" for="bbdown-path">BBDown 路径</label>
-          <input id="bbdown-path" v-model="form.bbdownPath" class="field-input" type="text" />
+        <v-expand-transition>
+          <div v-show="form.advancedOpen">
+            <v-card variant="outlined" class="pa-4 mb-4 rounded-lg advanced-panel">
+              <div class="text-subtitle-2 font-weight-bold mb-3 text-primary">高级下载选项</div>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-select
+                    v-model="form.advanced.downloadMode"
+                    label="下载模式"
+                    :items="[
+                      {title: '默认（正常下载）', value: ''},
+                      {title: '仅下载视频', value: 'video-only'},
+                      {title: '仅下载音频', value: 'audio-only'},
+                      {title: '仅下载弹幕', value: 'danmaku-only'},
+                      {title: '仅下载字幕', value: 'sub-only'},
+                      {title: '仅下载封面', value: 'cover-only'}
+                    ]"
+                    variant="outlined"
+                    density="compact"
+                  ></v-select>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-select
+                    v-model="form.advanced.apiMode"
+                    label="解析模式"
+                    :items="[
+                      {title: '默认', value: ''},
+                      {title: 'TV 端', value: 'tv'},
+                      {title: 'APP 端', value: 'app'},
+                      {title: '国际版', value: 'intl'}
+                    ]"
+                    variant="outlined"
+                    density="compact"
+                  ></v-select>
+                </v-col>
+              </v-row>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.encodingPriority" label="视频编码优先级" placeholder="例如：hevc,av1,avc" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.language" label="音频语言" placeholder="例如：chi、jpn" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+              </v-row>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.userAgent" label="User-Agent" placeholder="留空则使用 BBDown 默认策略" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.cookieText" label="Cookie / SESSDATA" placeholder="留空则不额外传 cookie" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+              </v-row>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.accessToken" label="Access Token" placeholder="TV / APP 接口需要时可填写" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.ffmpegPath" label="ffmpeg 路径" placeholder="留空则走系统 PATH" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+              </v-row>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.mp4boxPath" label="MP4Box 路径" placeholder="使用 MP4Box 时可指定路径" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.aria2cPath" label="aria2c 路径" placeholder="留空则走系统 PATH" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+              </v-row>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.aria2cArgs" label="aria2c 附加参数" placeholder="例如：--max-concurrent-downloads=8" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.delayPerPage" label="合集每 P 间隔秒数" placeholder="例如：2" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+              </v-row>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.filePattern" label="单 P 文件名模板" placeholder="例如：<videoTitle>-<dfn>" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.multiFilePattern" label="多 P 文件名模板" placeholder="例如：<videoTitle>/[P<pageNumberWithZero>]<pageTitle>" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+              </v-row>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.workDirOverride" label="工作目录覆盖" placeholder="例如：D:\Downloads" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.uposHost" label="UPOS Host" placeholder="例如：upos-sz-mirrorcos.bilivideo.com" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+              </v-row>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.biliHost" label="BiliPlus Host" placeholder="例如：https://www.biliplus.com" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.epHost" label="EP Host" placeholder="代理番剧 season 接口时可填写" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+              </v-row>
+
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.area" label="Area" placeholder="hk / tw / th" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-text-field v-model="form.advanced.configFile" label="配置文件" placeholder="例如：BBDown.config" variant="outlined" density="compact"></v-text-field>
+                </v-col>
+              </v-row>
+
+              <v-text-field v-model="form.advanced.extraArgs" label="额外 BBDown 参数" placeholder='例如：--work-dir "D:\Downloads"' variant="outlined" density="compact" class="mb-2"></v-text-field>
+
+              <div class="d-flex flex-wrap gap-2">
+                <v-checkbox v-model="form.advanced.downloadDanmaku" label="同时下载弹幕" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.skipSubtitle" label="跳过字幕" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.skipCover" label="跳过封面" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.useAria2c" label="使用 aria2c" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.useMp4box" label="使用 MP4Box 混流" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.skipMux" label="跳过混流" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.hideStreams" label="隐藏可用流信息" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.debugMode" label="输出调试日志" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.downloadAiSubtitle" label="下载 AI 字幕" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.videoAscending" label="视频升序" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.audioAscending" label="音频升序" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.allowPcdn" label="允许 PCDN" density="compact" hide-details></v-checkbox>
+                <v-checkbox v-model="form.advanced.saveArchivesToFile" label="记录已下载视频" density="compact" hide-details></v-checkbox>
+              </div>
+            </v-card>
+          </div>
+        </v-expand-transition>
+
+        <div class="d-flex flex-wrap gap-2">
+          <v-btn color="primary" type="submit" :loading="props.busy" :disabled="props.busy" elevation="1">开始下载</v-btn>
+          <v-btn variant="outlined" :loading="props.busy" :disabled="props.busy" @click="emit('fetchInfo')">获取画质/分P</v-btn>
+          <v-btn variant="text" @click="emit('fillExample')">填入示例</v-btn>
         </div>
-      </div>
-
-      <div class="field-grid">
-        <div class="field">
-          <label class="field-label" for="quality-select">清晰度</label>
-          <select id="quality-select" v-model="form.qualitySelect" class="field-input">
-            <option v-for="option in qualitySelectOptions" :key="option" :value="option">{{ option }}</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label class="field-label" for="quality-custom">自定义清晰度文本</label>
-          <input id="quality-custom" v-model="form.qualityCustom" class="field-input" type="text" placeholder="例如：1080P 高码率" />
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="page-spec">分 P / 剧集范围</label>
-        <input id="page-spec" v-model="form.pageSpec" class="field-input" type="text" placeholder="留空=默认；全集填 ALL；也支持 1-5、1,3,7、LAST" />
-        <p class="field-help">适用于多 P、合集、番剧、课程等，支持 ALL、LAST、1-5、1,3,7。</p>
-      </div>
-
-      <label class="toggle-item">
-        <input v-model="form.showAllPages" type="checkbox" />
-        <span>获取信息时显示全部分 P / 剧集列表</span>
-      </label>
-
-      <PagePickerPanel v-model="form.pageSpec" :items="props.pageItems" :meta="props.pageMeta" @refresh="emit('fetchInfo')" />
-
-      <div class="actions">
-        <button class="secondary" type="button" @click="toggleAdvancedMode">
-          {{ form.advancedOpen ? '切换到简约模式' : '显示更多功能' }}
-        </button>
-      </div>
-
-      <section v-show="form.advancedOpen" class="advanced-panel">
-        <p class="section-label section-label--inside">增强能力</p>
-        <h3 class="advanced-title">高级下载选项</h3>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="download-mode">下载模式</label>
-            <select id="download-mode" v-model="form.advanced.downloadMode" class="field-input">
-              <option value="">默认（正常下载）</option>
-              <option value="video-only">仅下载视频</option>
-              <option value="audio-only">仅下载音频</option>
-              <option value="danmaku-only">仅下载弹幕</option>
-              <option value="sub-only">仅下载字幕</option>
-              <option value="cover-only">仅下载封面</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="api-mode">解析模式</label>
-            <select id="api-mode" v-model="form.advanced.apiMode" class="field-input">
-              <option value="">默认</option>
-              <option value="tv">TV 端</option>
-              <option value="app">APP 端</option>
-              <option value="intl">国际版</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="encoding-priority">视频编码优先级</label>
-            <input id="encoding-priority" v-model="form.advanced.encodingPriority" class="field-input" type="text" placeholder="例如：hevc,av1,avc" />
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="language">音频语言</label>
-            <input id="language" v-model="form.advanced.language" class="field-input" type="text" placeholder="例如：chi、jpn" />
-          </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="user-agent">User-Agent</label>
-            <input id="user-agent" v-model="form.advanced.userAgent" class="field-input" type="text" placeholder="留空则使用 BBDown 默认策略" />
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="cookie-text">Cookie / SESSDATA</label>
-            <input id="cookie-text" v-model="form.advanced.cookieText" class="field-input" type="text" placeholder="留空则不额外传 cookie" />
-          </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="access-token">Access Token</label>
-            <input id="access-token" v-model="form.advanced.accessToken" class="field-input" type="text" placeholder="TV / APP 接口需要时可填写" />
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="ffmpeg-path">ffmpeg 路径</label>
-            <input id="ffmpeg-path" v-model="form.advanced.ffmpegPath" class="field-input" type="text" placeholder="留空则走系统 PATH" />
-          </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="mp4box-path">MP4Box 路径</label>
-            <input id="mp4box-path" v-model="form.advanced.mp4boxPath" class="field-input" type="text" placeholder="使用 MP4Box 时可指定路径" />
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="aria2c-path">aria2c 路径</label>
-            <input id="aria2c-path" v-model="form.advanced.aria2cPath" class="field-input" type="text" placeholder="留空则走系统 PATH" />
-          </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="aria2c-args">aria2c 附加参数</label>
-            <input id="aria2c-args" v-model="form.advanced.aria2cArgs" class="field-input" type="text" placeholder="例如：--max-concurrent-downloads=8" />
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="delay-per-page">合集每 P 间隔秒数</label>
-            <input id="delay-per-page" v-model="form.advanced.delayPerPage" class="field-input" type="text" placeholder="例如：2" />
-          </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="file-pattern">单 P 文件名模板</label>
-            <input id="file-pattern" v-model="form.advanced.filePattern" class="field-input" type="text" placeholder="例如：&lt;videoTitle&gt;-&lt;dfn&gt;" />
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="multi-file-pattern">多 P 文件名模板</label>
-            <input
-              id="multi-file-pattern"
-              v-model="form.advanced.multiFilePattern"
-              class="field-input"
-              type="text"
-              placeholder="例如：&lt;videoTitle&gt;/[P&lt;pageNumberWithZero&gt;]&lt;pageTitle&gt;"
-            />
-          </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="work-dir-override">工作目录覆盖</label>
-            <input id="work-dir-override" v-model="form.advanced.workDirOverride" class="field-input" type="text" placeholder="例如：D:\\Downloads" />
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="upos-host">UPOS Host</label>
-            <input id="upos-host" v-model="form.advanced.uposHost" class="field-input" type="text" placeholder="例如：upos-sz-mirrorcos.bilivideo.com" />
-          </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="bili-host">BiliPlus Host</label>
-            <input id="bili-host" v-model="form.advanced.biliHost" class="field-input" type="text" placeholder="例如：https://www.biliplus.com" />
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="ep-host">EP Host</label>
-            <input id="ep-host" v-model="form.advanced.epHost" class="field-input" type="text" placeholder="代理番剧 season 接口时可填写" />
-          </div>
-        </div>
-
-        <div class="field-grid">
-          <div class="field">
-            <label class="field-label" for="area">Area</label>
-            <input id="area" v-model="form.advanced.area" class="field-input" type="text" placeholder="hk / tw / th" />
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="config-file">配置文件</label>
-            <input id="config-file" v-model="form.advanced.configFile" class="field-input" type="text" placeholder="例如：BBDown.config" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label class="field-label" for="extra-args">额外 BBDown 参数</label>
-          <input id="extra-args" v-model="form.advanced.extraArgs" class="field-input" type="text" placeholder='例如：--work-dir "D:\\Downloads"' />
-        </div>
-
-        <div class="toggle-grid">
-          <label class="toggle-item"><input v-model="form.advanced.downloadDanmaku" type="checkbox" /><span>同时下载弹幕</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.skipSubtitle" type="checkbox" /><span>跳过字幕</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.skipCover" type="checkbox" /><span>跳过封面</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.useAria2c" type="checkbox" /><span>使用 aria2c</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.useMp4box" type="checkbox" /><span>使用 MP4Box 混流</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.skipMux" type="checkbox" /><span>跳过混流</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.hideStreams" type="checkbox" /><span>隐藏可用流信息</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.debugMode" type="checkbox" /><span>输出调试日志</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.downloadAiSubtitle" type="checkbox" /><span>下载 AI 字幕</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.videoAscending" type="checkbox" /><span>视频升序</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.audioAscending" type="checkbox" /><span>音频升序</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.allowPcdn" type="checkbox" /><span>允许 PCDN</span></label>
-          <label class="toggle-item"><input v-model="form.advanced.saveArchivesToFile" type="checkbox" /><span>记录已下载视频</span></label>
-        </div>
-      </section>
-
-      <div class="actions">
-        <button class="secondary" type="button" :disabled="props.busy" @click="emit('fetchInfo')">
-          {{ props.busy ? '处理中...' : '获取画质' }}
-        </button>
-        <button class="primary" type="submit" :disabled="props.busy">
-          {{ props.busy ? '处理中...' : '开始下载' }}
-        </button>
-        <button class="secondary" type="button" @click="emit('fillExample')">填入示例</button>
-      </div>
-    </form>
-  </section>
+      </v-form>
+    </v-card-text>
+  </v-card>
 </template>
 
 <style scoped>
 .panel-card {
-  display: grid;
-  gap: 18px;
-  padding: 24px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 250, 255, 0.82));
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
-  position: relative;
-  overflow: hidden;
-  animation: floatUp 500ms ease both;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  background: rgba(var(--v-theme-surface), 0.8);
+  backdrop-filter: blur(10px);
 }
 
-.panel-card::before {
+.top-accent-line {
+  position: relative;
+}
+
+.top-accent-line::before {
   content: "";
   position: absolute;
-  inset: 0 auto auto 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 4px;
-  background: linear-gradient(90deg, var(--accent-strong), rgba(220, 122, 48, 0.35));
-}
-
-.panel-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.title {
-  margin: 0;
-  font-size: 24px;
-}
-
-.summary {
-  margin: 8px 0 0;
-  max-width: 44ch;
-  color: var(--muted);
-  line-height: 1.7;
-  font-size: 14px;
-}
-
-.tag {
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: linear-gradient(160deg, rgba(14, 91, 216, 0.1), rgba(220, 122, 48, 0.08));
-  color: var(--accent-strong);
-  font-size: 13px;
-  font-weight: 700;
-  box-shadow: inset 0 0 0 1px rgba(14, 91, 216, 0.08);
-}
-
-.panel-form,
-.field-grid,
-.advanced-panel {
-  display: grid;
-  gap: 16px;
-}
-
-.field-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.section-label {
-  margin: 2px 0 0;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.section-label--inside {
-  color: var(--accent-strong);
-}
-
-.field {
-  display: grid;
-  gap: 8px;
-}
-
-.field-label {
-  font-weight: 700;
-}
-
-.field-input {
-  min-height: 50px;
-  border: 1px solid rgba(34, 67, 96, 0.12);
-  border-radius: 16px;
-  padding: 0 16px;
-  background: rgba(255, 255, 255, 0.88);
-  color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.field-help {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--muted);
+  background: linear-gradient(90deg, rgba(220, 122, 48, 0.6), rgba(var(--v-theme-primary), 0.8));
 }
 
 .advanced-panel {
-  padding: 18px;
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(242, 247, 255, 0.92), rgba(255, 249, 243, 0.82));
-  border: 1px solid rgba(34, 67, 96, 0.1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  background: rgba(var(--v-theme-surface-variant), 0.3);
 }
 
-.advanced-title {
-  margin: 0;
-  font-size: 18px;
-}
-
-.toggle-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.toggle-item {
-  display: inline-flex;
-  align-items: center;
+.gap-2 {
   gap: 8px;
-  min-height: 42px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.84);
-  border: 1px solid rgba(34, 67, 96, 0.1);
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.primary,
-.secondary {
-  min-height: 46px;
-  padding: 0 18px;
-  border-radius: 999px;
-}
-
-.primary {
-  border: 0;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: #fff;
-  box-shadow: 0 14px 24px rgba(14, 91, 216, 0.18);
-}
-
-.secondary {
-  border: 1px solid var(--panel-border);
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--text);
-}
-
-.primary:disabled,
-.secondary:disabled {
-  opacity: 0.72;
-  cursor: not-allowed;
-}
-
-@media (max-width: 760px) {
-  .panel-head {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .field-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>
