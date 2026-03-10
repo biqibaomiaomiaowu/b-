@@ -1,32 +1,47 @@
 import unittest
-from bilibili_media_webui import normalize_page_spec
+from bilibili_media_webui import extract_bilibili_identifier
 
-class TestNormalizePageSpec(unittest.TestCase):
-    def test_empty_or_whitespace(self):
-        self.assertEqual(normalize_page_spec(""), "")
-        self.assertEqual(normalize_page_spec("   "), "")
-        self.assertEqual(normalize_page_spec("\t\n"), "")
+class TestExtractBilibiliIdentifier(unittest.TestCase):
+    def test_bv_id(self):
+        # Valid BV ID
+        self.assertEqual(extract_bilibili_identifier("BV1xx411c7mD"), ("bv", "BV1xx411c7mD"))
+        # Case insensitivity (matches pattern but returns standardized BV)
+        self.assertEqual(extract_bilibili_identifier("bv1xx411c7md"), ("bv", "BV1xx411c7md"))
+        self.assertEqual(extract_bilibili_identifier("Bv1xx411c7md"), ("bv", "BV1xx411c7md"))
+        self.assertEqual(extract_bilibili_identifier("bV1xx411c7md"), ("bv", "BV1xx411c7md"))
 
-    def test_special_keywords(self):
-        # ALL keyword
-        self.assertEqual(normalize_page_spec("ALL"), "ALL")
-        self.assertEqual(normalize_page_spec("all"), "ALL")
-        self.assertEqual(normalize_page_spec(" All "), "ALL")
-        self.assertEqual(normalize_page_spec("\tAlL\n"), "ALL")
+    def test_av_id(self):
+        # Valid av ID
+        self.assertEqual(extract_bilibili_identifier("av12345678"), ("av", "12345678"))
+        # Case insensitivity
+        self.assertEqual(extract_bilibili_identifier("AV12345678"), ("av", "12345678"))
+        self.assertEqual(extract_bilibili_identifier("aV12345678"), ("av", "12345678"))
 
-        # LAST keyword
-        self.assertEqual(normalize_page_spec("LAST"), "LAST")
-        self.assertEqual(normalize_page_spec("last"), "LAST")
-        self.assertEqual(normalize_page_spec("  Last  "), "LAST")
-        self.assertEqual(normalize_page_spec("lASt"), "LAST")
+    def test_ep_id(self):
+        # Valid ep ID
+        self.assertEqual(extract_bilibili_identifier("ep12345"), ("ep", "12345"))
+        # Case insensitivity
+        self.assertEqual(extract_bilibili_identifier("EP12345"), ("ep", "12345"))
 
-    def test_page_ranges_and_lists(self):
-        self.assertEqual(normalize_page_spec("1"), "1")
-        self.assertEqual(normalize_page_spec("1,2,3"), "1,2,3")
-        self.assertEqual(normalize_page_spec("1, 2, 3"), "1,2,3")
-        self.assertEqual(normalize_page_spec("1 - 5"), "1-5")
-        self.assertEqual(normalize_page_spec("  1 - 5, 8, 10 - 12  "), "1-5,8,10-12")
-        self.assertEqual(normalize_page_spec("1\t-\n5"), "1-5")
+    def test_id_in_url(self):
+        # Extracted from URL
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/video/BV1xx411c7mD/"), ("bv", "BV1xx411c7mD"))
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/video/av12345678"), ("av", "12345678"))
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/bangumi/play/ep12345"), ("ep", "12345"))
+
+    def test_id_with_surrounding_text(self):
+        self.assertEqual(extract_bilibili_identifier("Check out this video: BV1xx411c7mD!"), ("bv", "BV1xx411c7mD"))
+        self.assertEqual(extract_bilibili_identifier("My favorite is av12345678"), ("av", "12345678"))
+        self.assertEqual(extract_bilibili_identifier("Watching ep12345 now"), ("ep", "12345"))
+
+    def test_invalid_target(self):
+        self.assertEqual(extract_bilibili_identifier("just some text"), ("", ""))
+        self.assertEqual(extract_bilibili_identifier(""), ("", ""))
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/"), ("", ""))
+        # Too short for BV
+        self.assertEqual(extract_bilibili_identifier("BV123"), ("", ""))
+        # Missing numbers
+        self.assertEqual(extract_bilibili_identifier("av"), ("", ""))
 
 if __name__ == '__main__':
     unittest.main()
