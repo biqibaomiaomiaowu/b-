@@ -1,63 +1,47 @@
 import unittest
-from bilibili_media_webui import normalize_video_target
+from bilibili_media_webui import extract_bilibili_identifier
 
-class TestNormalizeVideoTarget(unittest.TestCase):
-    def test_empty_string(self):
-        self.assertEqual(normalize_video_target(""), "")
-        self.assertEqual(normalize_video_target("   "), "")
+class TestExtractBilibiliIdentifier(unittest.TestCase):
+    def test_bv_id(self):
+        # Valid BV ID
+        self.assertEqual(extract_bilibili_identifier("BV1xx411c7mD"), ("bv", "BV1xx411c7mD"))
+        # Case insensitivity (matches pattern but returns standardized BV)
+        self.assertEqual(extract_bilibili_identifier("bv1xx411c7md"), ("bv", "BV1xx411c7md"))
+        self.assertEqual(extract_bilibili_identifier("Bv1xx411c7md"), ("bv", "BV1xx411c7md"))
+        self.assertEqual(extract_bilibili_identifier("bV1xx411c7md"), ("bv", "BV1xx411c7md"))
 
-    def test_url_match(self):
-        self.assertEqual(
-            normalize_video_target("https://www.bilibili.com/video/BV1xx411c7mD"),
-            "https://www.bilibili.com/video/BV1xx411c7mD"
-        )
-        self.assertEqual(
-            normalize_video_target("http://b23.tv/xxx"),
-            "http://b23.tv/xxx"
-        )
+    def test_av_id(self):
+        # Valid av ID
+        self.assertEqual(extract_bilibili_identifier("av12345678"), ("av", "12345678"))
+        # Case insensitivity
+        self.assertEqual(extract_bilibili_identifier("AV12345678"), ("av", "12345678"))
+        self.assertEqual(extract_bilibili_identifier("aV12345678"), ("av", "12345678"))
 
-    def test_url_with_trailing_punctuation(self):
-        self.assertEqual(
-            normalize_video_target("https://www.bilibili.com/video/BV1xx411c7mD)"),
-            "https://www.bilibili.com/video/BV1xx411c7mD"
-        )
-        self.assertEqual(
-            normalize_video_target("https://b23.tv/xxx】"),
-            "https://b23.tv/xxx"
-        )
-        self.assertEqual(
-            normalize_video_target("https://b23.tv/xxx?p=1;"),
-            "https://b23.tv/xxx?p=1"
-        )
-        self.assertEqual(
-            normalize_video_target("https://b23.tv/xxx?p=1?"),
-            "https://b23.tv/xxx?p=1"
-        )
+    def test_ep_id(self):
+        # Valid ep ID
+        self.assertEqual(extract_bilibili_identifier("ep12345"), ("ep", "12345"))
+        # Case insensitivity
+        self.assertEqual(extract_bilibili_identifier("EP12345"), ("ep", "12345"))
 
-    def test_bilibili_id_bv(self):
-        self.assertEqual(normalize_video_target("BV1xx411c7mD"), "BV1xx411c7mD")
-        self.assertEqual(normalize_video_target("bv1xx411c7md"), "BV1xx411c7md")
+    def test_id_in_url(self):
+        # Extracted from URL
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/video/BV1xx411c7mD/"), ("bv", "BV1xx411c7mD"))
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/video/av12345678"), ("av", "12345678"))
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/bangumi/play/ep12345"), ("ep", "12345"))
 
-    def test_bilibili_id_av(self):
-        self.assertEqual(normalize_video_target("av123456"), "av123456")
-        self.assertEqual(normalize_video_target("AV123456"), "av123456")
+    def test_id_with_surrounding_text(self):
+        self.assertEqual(extract_bilibili_identifier("Check out this video: BV1xx411c7mD!"), ("bv", "BV1xx411c7mD"))
+        self.assertEqual(extract_bilibili_identifier("My favorite is av12345678"), ("av", "12345678"))
+        self.assertEqual(extract_bilibili_identifier("Watching ep12345 now"), ("ep", "12345"))
 
-    def test_bilibili_id_ep_ss(self):
-        self.assertEqual(normalize_video_target("ep12345"), "ep12345")
-        self.assertEqual(normalize_video_target("EP12345"), "ep12345")
-        self.assertEqual(normalize_video_target("ss12345"), "ss12345")
-        self.assertEqual(normalize_video_target("SS12345"), "ss12345")
-
-    def test_embedded_bilibili_id(self):
-        self.assertEqual(normalize_video_target("look at this video BV1xx411c7mD!"), "BV1xx411c7mD")
-        self.assertEqual(normalize_video_target("video ID: av123456"), "av123456")
-
-    def test_embedded_url(self):
-        self.assertEqual(normalize_video_target("look at this url https://b23.tv/xxx"), "https://b23.tv/xxx")
-
-    def test_plain_text(self):
-        self.assertEqual(normalize_video_target("hello world"), "hello world")
-        self.assertEqual(normalize_video_target("just some random text"), "just some random text")
+    def test_invalid_target(self):
+        self.assertEqual(extract_bilibili_identifier("just some text"), ("", ""))
+        self.assertEqual(extract_bilibili_identifier(""), ("", ""))
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/"), ("", ""))
+        # Too short for BV
+        self.assertEqual(extract_bilibili_identifier("BV123"), ("", ""))
+        # Missing numbers
+        self.assertEqual(extract_bilibili_identifier("av"), ("", ""))
 
 if __name__ == '__main__':
     unittest.main()
