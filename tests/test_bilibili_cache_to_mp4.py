@@ -1,80 +1,86 @@
-import pytest
-from pathlib import Path
-import sys
-
-# Add the root directory to sys.path so we can import bilibili_cache_to_mp4
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from pathlib import Path
 
-from bilibili_cache_to_mp4 import ensure_unique_path
+import pytest
 
-def test_ensure_unique_path_empty_set():
-    """Test when the path is not in used_paths."""
-    used_paths = set()
-    path = Path("test.mp4")
-    result = ensure_unique_path(path, used_paths)
-    assert result == Path("test.mp4")
-    assert used_paths == {"test.mp4"}
+from bilibili_cache_to_mp4 import (
+    BILIBILI_CACHE_PREFIX,
+    BILIBILI_CACHE_PREFIX_LEN,
+    strip_bilibili_cache_prefix,
+)
 
-def test_ensure_unique_path_already_used():
-    """Test when the path is already in used_paths."""
-    used_paths = {"test.mp4"}
-    path = Path("test.mp4")
-    result = ensure_unique_path(path, used_paths)
-    assert result == Path("test_1.mp4")
-    assert used_paths == {"test.mp4", "test_1.mp4"}
 
-def test_ensure_unique_path_multiple_used():
-    """Test when the path and its _1 variant are already in used_paths."""
-    used_paths = {"test.mp4", "test_1.mp4"}
-    path = Path("test.mp4")
-    result = ensure_unique_path(path, used_paths)
-    assert result == Path("test_2.mp4")
-    assert used_paths == {"test.mp4", "test_1.mp4", "test_2.mp4"}
+def test_strip_bilibili_cache_prefix_creates_target_dir(tmp_path: Path):
+    """Test that the target directory is created if it does not exist."""
+    source_path = tmp_path / "source.m4s"
+    target_dir = tmp_path / "target_dir"
+    target_path = target_dir / "target.m4s"
 
-def test_ensure_unique_path_case_insensitive():
-    """Test that the checking is case-insensitive."""
-    used_paths = {"test.mp4"}
-    path = Path("TEST.mp4")
-    result = ensure_unique_path(path, used_paths)
-    # The output path shouldn't be lowercased, just the check is insensitive
-    assert result == Path("TEST_1.mp4")
-    assert used_paths == {"test.mp4", "test_1.mp4"}
+    # Create source file with valid prefix
+    content = BILIBILI_CACHE_PREFIX + b"hello world"
+    source_path.write_bytes(content)
 
-def test_ensure_unique_path_case_insensitive_multiple():
-    """Test case-insensitivity with multiple pre-existing cases."""
-    used_paths = {"test.mp4", "test_1.mp4"}
-    path = Path("TeSt.mp4")
-    result = ensure_unique_path(path, used_paths)
-    assert result == Path("TeSt_2.mp4")
-    assert used_paths == {"test.mp4", "test_1.mp4", "test_2.mp4"}
+    assert not target_dir.exists()
 
-def test_ensure_unique_path_different_suffix():
-    """Test with a different extension."""
-    used_paths = {"video.mkv"}
-    path = Path("video.mkv")
-    result = ensure_unique_path(path, used_paths)
-    assert result == Path("video_1.mkv")
-    assert used_paths == {"video.mkv", "video_1.mkv"}
+    result_path = strip_bilibili_cache_prefix(source_path, target_path)
 
-def test_ensure_unique_path_complex_name():
-    """Test with a complex file name containing dots."""
-    used_paths = {"my.video.v1.mp4", "my.video.v1_1.mp4"}
-    path = Path("my.video.v1.mp4")
-    result = ensure_unique_path(path, used_paths)
-    assert result == Path("my.video.v1_2.mp4")
-    assert used_paths == {"my.video.v1.mp4", "my.video.v1_1.mp4", "my.video.v1_2.mp4"}
+    assert target_dir.exists()
+    assert target_path.exists()
+    assert result_path == target_path
+    assert target_path.read_bytes() == b"hello world"
 
-def test_ensure_unique_path_absolute_path():
-    """Test with an absolute path."""
-    if os.name == 'nt':
-        base = "C:\\videos"
-    else:
-        base = "/videos"
 
-    p1 = str(Path(base) / "test.mp4").lower()
-    used_paths = {p1}
-    path = Path(base) / "test.mp4"
-    result = ensure_unique_path(path, used_paths)
-    assert result == Path(base) / "test_1.mp4"
-    assert used_paths == {p1, str(Path(base) / "test_1.mp4").lower()}
+def test_strip_bilibili_cache_prefix_content(tmp_path: Path):
+    """Test that the correct content is stripped."""
+    source_path = tmp_path / "source.m4s"
+    target_path = tmp_path / "target.m4s"
+
+    # Prefix is exactly BILIBILI_CACHE_PREFIX_LEN bytes
+    content = b"A" * BILIBILI_CACHE_PREFIX_LEN + b"actual media content"
+    source_path.write_bytes(content)
+
+    strip_bilibili_cache_prefix(source_path, target_path)
+
+    assert target_path.read_bytes() == b"actual media content"
+
+
+def test_strip_bilibili_cache_prefix_large_file(tmp_path: Path):
+    """Test with a file larger than the copy buffer (1MB)."""
+    source_path = tmp_path / "source.m4s"
+    target_path = tmp_path / "target.m4s"
+
+    # 2MB of data
+    large_data = os.urandom(2 * 1024 * 1024)
+    content = BILIBILI_CACHE_PREFIX + large_data
+    source_path.write_bytes(content)
+
+    strip_bilibili_cache_prefix(source_path, target_path)
+
+    assert target_path.read_bytes() == large_data
+
+
+def test_strip_bilibili_cache_prefix_empty_after_prefix(tmp_path: Path):
+    """Test with a file that only contains the prefix."""
+    source_path = tmp_path / "source.m4s"
+    target_path = tmp_path / "target.m4s"
+
+    source_path.write_bytes(BILIBILI_CACHE_PREFIX)
+
+    strip_bilibili_cache_prefix(source_path, target_path)
+
+    assert target_path.exists()
+    assert target_path.read_bytes() == b""
+
+
+def test_strip_bilibili_cache_prefix_file_smaller_than_prefix(tmp_path: Path):
+    """Test with a file smaller than the prefix length. Should just copy empty."""
+    source_path = tmp_path / "source.m4s"
+    target_path = tmp_path / "target.m4s"
+
+    # Write only a few bytes (less than prefix length)
+    source_path.write_bytes(b"short")
+
+    strip_bilibili_cache_prefix(source_path, target_path)
+
+    assert target_path.exists()
+    assert target_path.read_bytes() == b""

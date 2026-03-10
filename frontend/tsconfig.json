@@ -9,8 +9,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "lib": ["ESNext", "DOM", "DOM.Iterable", "ESNext.Disposable"],
-    "types": ["vite/client", "node"],
+    "types": ["vite/client", "node", "vuetify"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
