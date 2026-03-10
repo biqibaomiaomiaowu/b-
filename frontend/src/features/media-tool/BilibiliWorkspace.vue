@@ -433,361 +433,120 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="workspace">
-    <section class="hero-card">
-      <div class="hero-copy">
-        <p class="hero-eyebrow">Vue 3 + Python API</p>
-        <h1 class="hero-title">Bilibili 下载 / 转换工作台</h1>
-        <p class="hero-text">
-          前端已改为 Vue 3 工程化结构，后端只负责本地 API、工具探测和静态资源分发。开发时可用 Vite 代理，生产时可直接由 Python 服务托管构建产物。
-        </p>
-        <div class="hero-pill-row">
-          <span class="hero-pill">本地执行</span>
-          <span class="hero-pill">工具自动探测</span>
-          <span class="hero-pill">下载与转码分流</span>
-        </div>
-      </div>
-      <div class="hero-stage">
-        <div class="hero-flow-card">
-          <p class="flow-eyebrow">Workflow</p>
-          <div class="flow-steps">
-            <div class="flow-step">
-              <span class="flow-index">01</span>
-              <div>
-                <strong>解析链接</strong>
-                <p>自动识别 BV / av / ep / ss、清晰度和分 P。</p>
-              </div>
-            </div>
-            <div class="flow-step">
-              <span class="flow-index">02</span>
-              <div>
-                <strong>执行任务</strong>
-                <p>下载、缓存转码、批量队列统一走本地 API。</p>
-              </div>
-            </div>
-            <div class="flow-step">
-              <span class="flow-index">03</span>
-              <div>
-                <strong>保留结果</strong>
-                <p>命令、日志和偏好设置留在当前工作台。</p>
-              </div>
-            </div>
+  <v-container class="px-2 px-md-4 py-4 workspace-container" fluid>
+    <!-- 极简风格 Hero Section -->
+    <v-card flat class="mb-6 rounded-lg pa-6 hero-card">
+      <v-row align="center">
+        <v-col cols="12" md="7">
+          <div class="text-overline mb-2 text-primary">Vue 3 + Python API</div>
+          <h1 class="text-h4 text-md-h3 font-weight-bold mb-4">Bilibili 下载/转换</h1>
+          <p class="text-body-1 text-medium-emphasis mb-6">
+            基于 Vite 的 Vue 3 前端界面，后端专注于本地化工具检测、任务调度与下载代理。极简设计风格，专注核心功能。
+          </p>
+          <div class="d-flex flex-wrap gap-2">
+            <v-chip color="primary" variant="flat" size="small">本地执行</v-chip>
+            <v-chip variant="outlined" size="small">工具自动探测</v-chip>
+            <v-chip variant="outlined" size="small">极简设计</v-chip>
           </div>
-        </div>
+        </v-col>
 
-        <div class="hero-metrics">
-          <article class="metric-card">
-            <span class="metric-label">当前服务</span>
-            <strong class="metric-value">{{ serverUrl }}</strong>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">默认 BBDown</span>
-            <strong class="metric-value">{{ bootstrap.default_bbdown }}</strong>
-          </article>
-          <article class="metric-card metric-card--accent">
-            <span class="metric-label">预置清晰度</span>
-            <strong class="metric-value">{{ qualityOptions.length }} 项</strong>
-          </article>
-        </div>
-      </div>
-    </section>
+        <v-col cols="12" md="5">
+          <v-card variant="tonal" color="primary" class="rounded-lg pa-4">
+            <v-row>
+              <v-col cols="4" class="text-center">
+                <div class="text-caption text-medium-emphasis">服务</div>
+                <div class="text-subtitle-2 font-weight-bold">{{ serverUrl || '未连接' }}</div>
+              </v-col>
+              <v-col cols="4" class="text-center border-s">
+                <div class="text-caption text-medium-emphasis">BBDown</div>
+                <div class="text-subtitle-2 font-weight-bold text-truncate" :title="bootstrap.default_bbdown">{{ bootstrap.default_bbdown || '未设置' }}</div>
+              </v-col>
+              <v-col cols="4" class="text-center border-s">
+                <div class="text-caption text-medium-emphasis">清晰度选项</div>
+                <div class="text-subtitle-2 font-weight-bold">{{ qualityOptions.length }} 项</div>
+              </v-col>
+            </v-row>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-card>
 
-    <section class="content-grid">
-      <div class="main-column">
-        <div class="dual-grid">
-          <CacheConverterPanel v-model="cacheForm" :busy="busy" @run="runCacheConversion" @fill-example="fillCacheExample" />
-          <DownloadPanel
-            v-model="downloadForm"
-            :busy="busy"
-            :quality-options="qualityOptions"
-            :login-status="loginStatus"
-            :tool-detection="toolDetection"
-            :page-items="pageItems"
-            :page-meta="pageMeta"
-            @fetch-info="fetchVideoInfo"
-            @run-download="runDownload"
-            @fill-example="fillDownloadExample"
-            @refresh-login="refreshLoginStatus(true)"
-            @login-web="startLogin('web')"
-            @login-tv="startLogin('tv')"
-            @clear-login="clearLoginData"
-            @detect-tools="detectTools(true, true)"
+    <!-- 工作区主体布局 -->
+    <v-row>
+      <!-- 左侧操作区 -->
+      <v-col cols="12" lg="8">
+        <v-row>
+          <!-- 缓存转换与基础下载 -->
+          <v-col cols="12" md="5">
+            <CacheConverterPanel v-model="cacheForm" :busy="busy" @run="runCacheConversion" @fill-example="fillCacheExample" />
+          </v-col>
+          <v-col cols="12" md="7">
+            <DownloadPanel
+              v-model="downloadForm"
+              :busy="busy"
+              :quality-options="qualityOptions"
+              :login-status="loginStatus"
+              :tool-detection="toolDetection"
+              :page-items="pageItems"
+              :page-meta="pageMeta"
+              @fetch-info="fetchVideoInfo"
+              @run-download="runDownload"
+              @fill-example="fillDownloadExample"
+              @refresh-login="refreshLoginStatus(true)"
+              @login-web="startLogin('web')"
+              @login-tv="startLogin('tv')"
+              @clear-login="clearLoginData"
+              @detect-tools="detectTools(true, true)"
+            />
+          </v-col>
+        </v-row>
+
+        <!-- 批量下载区 -->
+        <v-row class="mt-4">
+          <v-col cols="12">
+            <BatchQueuePanel v-model="batchForm" :busy="busy" @run="runBatchDownload" @fill-example="fillBatchExample" />
+          </v-col>
+        </v-row>
+      </v-col>
+
+      <!-- 右侧结果日志区 -->
+      <v-col cols="12" lg="4">
+        <div class="sticky-result">
+          <div class="text-overline mb-2 ps-1">Session Log</div>
+          <ResultPanel
+            :status-text="statusText"
+            :status-kind="statusKind"
+            :result="result"
+            :server-url="serverUrl"
+            @copy-command="copyCommand"
+            @save-settings="persistence.save(true)"
+            @clear-settings="persistence.clear"
+            @clear-log="clearResult"
           />
         </div>
-
-        <BatchQueuePanel v-model="batchForm" :busy="busy" @run="runBatchDownload" @fill-example="fillBatchExample" />
-      </div>
-
-      <aside class="result-column">
-        <p class="column-label">Session</p>
-        <ResultPanel
-          :status-text="statusText"
-          :status-kind="statusKind"
-          :result="result"
-          :server-url="serverUrl"
-          @copy-command="copyCommand"
-          @save-settings="persistence.save(true)"
-          @clear-settings="persistence.clear"
-          @clear-log="clearResult"
-        />
-      </aside>
-    </section>
-  </main>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <style scoped>
-.workspace {
-  width: min(1480px, calc(100vw - 32px));
+.workspace-container {
+  max-width: 1480px;
   margin: 0 auto;
-  padding: 30px 0 42px;
 }
 
 .hero-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(380px, 0.95fr);
-  gap: 22px;
-  padding: 32px;
-  border-radius: var(--radius-2xl);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 252, 0.84)),
-    radial-gradient(circle at top right, rgba(14, 91, 216, 0.14), transparent 34%);
-  border: 1px solid rgba(34, 67, 96, 0.12);
-  box-shadow: var(--shadow-strong);
-  backdrop-filter: blur(18px);
-  position: relative;
-  overflow: hidden;
-  animation: floatUp 420ms ease both;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  background: rgba(var(--v-theme-surface), 0.8);
+  backdrop-filter: blur(10px);
 }
 
-.hero-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: 220px;
-  height: 220px;
-  background: radial-gradient(circle, rgba(220, 122, 48, 0.12), transparent 70%);
-  transform: translate(-24%, -28%);
-  pointer-events: none;
-}
-
-.hero-copy {
-  display: grid;
-  gap: 16px;
-  align-content: start;
-}
-
-.hero-eyebrow {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--accent-strong);
-}
-
-.hero-title {
-  margin: 0;
-  max-width: 11ch;
-  font-family: var(--font-display);
-  font-size: clamp(36px, 5vw, 62px);
-  line-height: 0.98;
-  letter-spacing: 0.01em;
-}
-
-.hero-text {
-  margin: 0;
-  max-width: 58ch;
-  font-size: 16px;
-  line-height: 1.9;
-  color: var(--muted);
-}
-
-.hero-pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.hero-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(34, 67, 96, 0.08);
-  color: var(--accent-strong);
-  font-size: 13px;
-  font-weight: 700;
-  box-shadow: 0 10px 24px rgba(29, 56, 79, 0.06);
-}
-
-.hero-stage {
-  display: grid;
-  gap: 14px;
-}
-
-.hero-flow-card {
-  display: grid;
-  gap: 14px;
-  padding: 20px;
-  border-radius: 30px;
-  background:
-    linear-gradient(160deg, rgba(9, 36, 78, 0.96), rgba(18, 61, 120, 0.9)),
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 30%);
-  color: #edf4ff;
-  box-shadow: 0 22px 40px rgba(14, 40, 73, 0.22);
-}
-
-.flow-eyebrow {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(237, 244, 255, 0.72);
-}
-
-.flow-steps {
-  display: grid;
-  gap: 12px;
-}
-
-.flow-step {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-}
-
-.flow-step strong {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 15px;
-}
-
-.flow-step p {
-  margin: 0;
-  color: rgba(237, 244, 255, 0.74);
-  line-height: 1.6;
-  font-size: 13px;
-}
-
-.flow-index {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff2df;
-  font-family: var(--font-display);
-  font-size: 15px;
-  letter-spacing: 0.08em;
-}
-
-.hero-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.metric-card {
-  display: grid;
+.gap-2 {
   gap: 8px;
-  min-height: 118px;
-  padding: 18px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.76);
-  border: 1px solid rgba(34, 67, 96, 0.1);
-  box-shadow: 0 14px 28px rgba(29, 56, 79, 0.08);
 }
 
-.metric-card--accent {
-  background: linear-gradient(160deg, rgba(255, 244, 232, 0.98), rgba(255, 255, 255, 0.82));
-  border-color: rgba(220, 122, 48, 0.18);
-}
-
-.metric-label {
-  color: var(--muted);
-  font-size: 13px;
-  letter-spacing: 0.04em;
-}
-
-.metric-value {
-  font-size: 19px;
-  line-height: 1.35;
-  word-break: break-word;
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.95fr);
-  gap: 22px;
-  margin-top: 22px;
-  align-items: start;
-}
-
-.main-column,
-.dual-grid {
-  display: grid;
-  gap: 22px;
-}
-
-.dual-grid {
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-}
-
-.result-column {
+.sticky-result {
   position: sticky;
-  top: 22px;
-  display: grid;
-  gap: 10px;
-}
-
-.column-label {
-  margin: 0;
-  padding-left: 4px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-@media (max-width: 1260px) {
-  .hero-card,
-  .content-grid,
-  .dual-grid,
-  .hero-metrics {
-    grid-template-columns: 1fr;
-  }
-
-  .result-column {
-    position: static;
-  }
-}
-
-@media (max-width: 680px) {
-  .workspace {
-    width: min(100vw - 24px, 100%);
-    padding-top: 20px;
-    padding-bottom: 24px;
-  }
-
-  .hero-card {
-    padding: 20px;
-    border-radius: 28px;
-  }
-
-  .hero-title {
-    max-width: none;
-  }
-
-  .hero-flow-card {
-    padding: 16px;
-    border-radius: 24px;
-  }
+  top: 24px;
 }
 </style>

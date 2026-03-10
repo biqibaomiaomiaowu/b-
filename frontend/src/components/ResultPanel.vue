@@ -22,123 +22,73 @@ const combinedLog = computed(() => [props.result.stdout, props.result.stderr].fi
 </script>
 
 <template>
-  <section class="result-card">
-    <div class="result-head">
-      <div>
-        <p class="eyebrow">执行结果</p>
-        <h2 class="title">运行结果</h2>
-        <p class="summary">这一栏固定保留命令、退出码和完整输出，方便复现、排错和保存现场。</p>
+  <v-card class="rounded-lg result-card d-flex flex-column h-100" flat>
+    <v-card-text class="d-flex flex-column flex-grow-1 pa-4">
+      <div class="d-flex flex-column flex-md-row justify-space-between align-start mb-4 gap-4">
+        <div>
+          <div class="text-overline text-medium-emphasis">执行结果</div>
+          <div class="text-h6 font-weight-bold">运行结果</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">固定保留命令、退出码和完整输出，方便排错。</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <v-btn variant="outlined" size="small" @click="emit('copyCommand')">复制命令</v-btn>
+          <v-btn variant="outlined" size="small" @click="emit('saveSettings')">保存设置</v-btn>
+          <v-btn variant="outlined" size="small" @click="emit('clearSettings')">清空设置</v-btn>
+          <v-btn variant="outlined" size="small" @click="emit('clearLog')">清空日志</v-btn>
+        </div>
       </div>
-      <div class="actions">
-        <button class="secondary" type="button" @click="emit('copyCommand')">复制命令</button>
-        <button class="secondary" type="button" @click="emit('saveSettings')">保存设置</button>
-        <button class="secondary" type="button" @click="emit('clearSettings')">清除已保存设置</button>
-        <button class="secondary" type="button" @click="emit('clearLog')">清空日志</button>
+
+      <div class="mb-4">
+        <StatusBanner :text="statusText" :kind="statusKind" />
       </div>
-    </div>
 
-    <StatusBanner :text="statusText" :kind="statusKind" />
-
-    <div class="terminal-bar">
-      <span class="terminal-dot terminal-dot--red"></span>
-      <span class="terminal-dot terminal-dot--yellow"></span>
-      <span class="terminal-dot terminal-dot--green"></span>
-      <span class="terminal-label">local session</span>
-    </div>
-
-    <dl class="kv-list">
-      <div class="kv-item">
-        <dt>命令</dt>
-        <dd>{{ result.command || '-' }}</dd>
+      <div class="d-flex align-center gap-2 mb-3 bg-surface-variant rounded-pill px-3 py-1 align-self-start">
+        <div class="terminal-dot bg-error"></div>
+        <div class="terminal-dot bg-warning"></div>
+        <div class="terminal-dot bg-success"></div>
+        <span class="text-caption text-medium-emphasis ml-2 text-uppercase font-weight-bold tracking-widest">local session</span>
       </div>
-      <div class="kv-item">
-        <dt>退出码</dt>
-        <dd>{{ result.returncode ?? '-' }}</dd>
-      </div>
-      <div class="kv-item">
-        <dt>时间</dt>
-        <dd>{{ result.finished_at || '-' }}</dd>
-      </div>
-    </dl>
 
-    <pre class="log-output">{{ combinedLog }}</pre>
+      <v-row dense class="mb-4 flex-shrink-0">
+        <v-col cols="12" sm="4">
+          <v-card variant="outlined" class="pa-2 h-100 rounded bg-surface-variant">
+            <div class="text-caption text-medium-emphasis mb-1">命令</div>
+            <div class="text-body-2 font-weight-bold" style="word-break: break-all;">{{ result.command || '-' }}</div>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="4">
+          <v-card variant="outlined" class="pa-2 h-100 rounded bg-surface-variant">
+            <div class="text-caption text-medium-emphasis mb-1">退出码</div>
+            <div class="text-body-2 font-weight-bold">{{ result.returncode ?? '-' }}</div>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="4">
+          <v-card variant="outlined" class="pa-2 h-100 rounded bg-surface-variant">
+            <div class="text-caption text-medium-emphasis mb-1">时间</div>
+            <div class="text-body-2 font-weight-bold">{{ result.finished_at || '-' }}</div>
+          </v-card>
+        </v-col>
+      </v-row>
 
-    <p class="footer">
-      启动地址：<span>{{ serverUrl }}</span>
-      <span class="footer-separator">·</span>
-      参考：
-      <a href="https://github.com/nilaoda/BBDown" target="_blank" rel="noreferrer">BBDown</a>
-    </p>
-  </section>
+      <v-card variant="flat" class="bg-black text-white rounded-lg flex-grow-1 d-flex flex-column mb-4" style="min-height: 280px;">
+        <pre class="log-output pa-4 flex-grow-1">{{ combinedLog }}</pre>
+      </v-card>
+
+      <div class="text-caption text-medium-emphasis mt-auto">
+        启动地址：<span class="text-high-emphasis">{{ serverUrl }}</span>
+        <span class="mx-2">·</span>
+        参考：
+        <a href="https://github.com/nilaoda/BBDown" target="_blank" rel="noreferrer" class="text-primary text-decoration-none font-weight-bold">BBDown</a>
+      </div>
+    </v-card-text>
+  </v-card>
 </template>
 
 <style scoped>
 .result-card {
-  display: grid;
-  gap: 18px;
-  border-radius: var(--radius-xl);
-  padding: 24px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 255, 0.86));
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
-  animation: floatUp 580ms ease both;
-}
-
-.result-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.eyebrow {
-  margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.title {
-  margin: 0;
-  font-size: 24px;
-}
-
-.summary {
-  margin: 8px 0 0;
-  max-width: 34ch;
-  color: var(--muted);
-  line-height: 1.7;
-  font-size: 14px;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.secondary {
-  min-height: 42px;
-  padding: 0 16px;
-  border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--text);
-}
-
-.terminal-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(16, 32, 51, 0.06);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  background: rgba(var(--v-theme-surface), 0.8);
+  backdrop-filter: blur(10px);
 }
 
 .terminal-dot {
@@ -147,89 +97,34 @@ const combinedLog = computed(() => [props.result.stdout, props.result.stderr].fi
   border-radius: 50%;
 }
 
-.terminal-dot--red {
-  background: #eb6c63;
-}
-
-.terminal-dot--yellow {
-  background: #e4b13e;
-}
-
-.terminal-dot--green {
-  background: #47b56b;
-}
-
-.terminal-label {
-  margin-left: 6px;
-  color: var(--muted);
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.kv-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin: 0;
-}
-
-.kv-item {
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(34, 67, 96, 0.08);
-}
-
-.kv-item dt {
-  margin-bottom: 8px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.kv-item dd {
-  margin: 0;
-  font-weight: 600;
-  word-break: break-word;
+.tracking-widest {
+  letter-spacing: 0.1em;
 }
 
 .log-output {
-  margin: 0;
-  min-height: 280px;
-  padding: 18px;
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(13, 24, 38, 0.98), rgba(17, 33, 52, 0.98)),
-    radial-gradient(circle at top right, rgba(14, 91, 216, 0.18), transparent 24%);
-  color: #d4e2f3;
-  overflow: auto;
+  font-family: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  font-size: 13px;
   white-space: pre-wrap;
   word-break: break-word;
-  line-height: 1.68;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  line-height: 1.6;
+  overflow-y: auto;
+  max-height: 600px;
 }
 
-.footer {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
+/* 改善滚动条样式 */
+.log-output::-webkit-scrollbar {
+  width: 8px;
+}
+.log-output::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.footer-separator {
-  margin: 0 8px;
+.gap-2 {
+  gap: 8px;
 }
 
-@media (max-width: 900px) {
-  .result-head {
-    flex-direction: column;
-  }
-
-  .actions {
-    justify-content: flex-start;
-  }
-
-  .kv-list {
-    grid-template-columns: 1fr;
-  }
+.gap-4 {
+  gap: 16px;
 }
 </style>

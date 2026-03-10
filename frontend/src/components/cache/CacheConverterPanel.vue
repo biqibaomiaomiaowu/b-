@@ -14,216 +14,123 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section class="panel-card">
-    <div class="panel-head">
-      <div>
-        <p class="eyebrow">模式一</p>
-        <h2 class="title">缓存目录转 MP4</h2>
-        <p class="summary">适合把手机或客户端缓存目录快速整理成可直接播放、归档的 MP4 文件。</p>
-      </div>
-      <span class="tag">本地转换</span>
-    </div>
-
-    <form class="panel-form" @submit.prevent="emit('run')">
-      <div class="field">
-        <label class="field-label" for="cache-input-path">缓存目录</label>
-        <input id="cache-input-path" v-model="form.inputPath" class="field-input" type="text" required />
-        <p class="field-help">可填单个视频缓存目录，也可填整个 <code>bilibili</code> 根目录批量处理。</p>
+  <v-card class="h-100 rounded-lg top-accent-line panel-card" flat>
+    <v-card-text>
+      <div class="d-flex justify-space-between align-start mb-4">
+        <div>
+          <div class="text-overline text-medium-emphasis">模式一</div>
+          <div class="text-h6 font-weight-bold">缓存目录转 MP4</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">适合把手机或客户端缓存目录快速整理成可直接播放、归档的 MP4 文件。</div>
+        </div>
+        <v-chip size="small" color="primary" variant="tonal" class="font-weight-bold">本地转换</v-chip>
       </div>
 
-      <div class="field-grid">
-        <div class="field">
-          <label class="field-label" for="cache-output">输出目录 / 输出文件</label>
-          <input id="cache-output" v-model="form.output" class="field-input" type="text" placeholder="留空则按脚本默认规则输出" />
+      <v-form @submit.prevent="emit('run')">
+        <v-text-field
+          v-model="form.inputPath"
+          label="缓存目录"
+          required
+          variant="outlined"
+          density="compact"
+          hint="可填单个视频缓存目录，也可填整个 bilibili 根目录批量处理。"
+          persistent-hint
+          class="mb-3"
+        ></v-text-field>
+
+        <v-row dense class="mb-1">
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="form.output"
+              label="输出目录 / 输出文件"
+              placeholder="留空则按脚本默认规则输出"
+              variant="outlined"
+              density="compact"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="form.ffmpeg"
+              label="ffmpeg 路径"
+              variant="outlined"
+              density="compact"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+
+        <v-text-field
+          v-model="form.ffprobe"
+          label="ffprobe 路径"
+          placeholder="留空则自动推断"
+          variant="outlined"
+          density="compact"
+          class="mb-1"
+        ></v-text-field>
+
+        <div class="d-flex flex-wrap gap-4 mb-4">
+          <v-switch
+            v-model="form.force"
+            label="强制覆盖"
+            color="primary"
+            density="compact"
+            hide-details
+          ></v-switch>
+          <v-switch
+            v-model="form.dryRun"
+            label="仅预演"
+            color="primary"
+            density="compact"
+            hide-details
+          ></v-switch>
         </div>
 
-        <div class="field">
-          <label class="field-label" for="cache-ffmpeg">ffmpeg 路径</label>
-          <input id="cache-ffmpeg" v-model="form.ffmpeg" class="field-input" type="text" />
+        <div class="d-flex gap-2">
+          <v-btn
+            color="primary"
+            type="submit"
+            :loading="props.busy"
+            :disabled="props.busy"
+            elevation="1"
+          >
+            开始转换
+          </v-btn>
+          <v-btn
+            variant="outlined"
+            @click="emit('fillExample')"
+          >
+            填入示例
+          </v-btn>
         </div>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="cache-ffprobe">ffprobe 路径</label>
-        <input id="cache-ffprobe" v-model="form.ffprobe" class="field-input" type="text" placeholder="留空则自动推断" />
-      </div>
-
-      <div class="toggle-grid">
-        <label class="toggle-item">
-          <input v-model="form.force" type="checkbox" />
-          <span>强制覆盖已有输出</span>
-        </label>
-        <label class="toggle-item">
-          <input v-model="form.dryRun" type="checkbox" />
-          <span>仅预演，不真正执行</span>
-        </label>
-      </div>
-
-      <div class="actions">
-        <button class="primary" type="submit" :disabled="props.busy">
-          {{ props.busy ? '处理中...' : '开始转换' }}
-        </button>
-        <button class="secondary" type="button" @click="emit('fillExample')">填入示例</button>
-      </div>
-    </form>
-  </section>
+      </v-form>
+    </v-card-text>
+  </v-card>
 </template>
 
 <style scoped>
 .panel-card {
-  display: grid;
-  gap: 18px;
-  padding: 24px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 251, 255, 0.8));
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
-  position: relative;
-  overflow: hidden;
-  animation: floatUp 460ms ease both;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  background: rgba(var(--v-theme-surface), 0.8);
+  backdrop-filter: blur(10px);
 }
 
-.panel-card::before {
+.top-accent-line {
+  position: relative;
+}
+
+.top-accent-line::before {
   content: "";
   position: absolute;
-  inset: 0 auto auto 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 4px;
-  background: linear-gradient(90deg, var(--accent), rgba(14, 91, 216, 0.12));
+  background: linear-gradient(90deg, rgb(var(--v-theme-primary)), rgba(var(--v-theme-primary), 0.2));
 }
 
-.panel-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.title {
-  margin: 0;
-  font-size: 24px;
-}
-
-.summary {
-  margin: 8px 0 0;
-  max-width: 36ch;
-  color: var(--muted);
-  line-height: 1.7;
-  font-size: 14px;
-}
-
-.tag {
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(14, 91, 216, 0.1);
-  color: var(--accent-strong);
-  font-size: 13px;
-  font-weight: 700;
-  box-shadow: inset 0 0 0 1px rgba(14, 91, 216, 0.08);
-}
-
-.panel-form,
-.field-grid {
-  display: grid;
-  gap: 16px;
-}
-
-.field-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.field {
-  display: grid;
+.gap-2 {
   gap: 8px;
 }
 
-.field-label {
-  font-weight: 700;
-}
-
-.field-input {
-  min-height: 50px;
-  border: 1px solid rgba(34, 67, 96, 0.12);
-  border-radius: 16px;
-  padding: 0 16px;
-  background: rgba(255, 255, 255, 0.86);
-  color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.field-help {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
-.toggle-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.toggle-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(34, 67, 96, 0.1);
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.primary,
-.secondary {
-  min-height: 46px;
-  padding: 0 18px;
-  border-radius: 999px;
-}
-
-.primary {
-  border: 0;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: #fff;
-  box-shadow: 0 14px 24px rgba(14, 91, 216, 0.18);
-}
-
-.secondary {
-  border: 1px solid var(--panel-border);
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--text);
-}
-
-.primary:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-@media (max-width: 760px) {
-  .field-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .panel-head {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+.gap-4 {
+  gap: 16px;
 }
 </style>
