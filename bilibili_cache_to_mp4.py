@@ -1,5 +1,6 @@
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -8,6 +9,7 @@ from pathlib import Path
 
 
 INVALID_FILENAME_CHARS = '<>:"/\\|?*'
+INVALID_FILENAME_REGEX = re.compile(f"[{re.escape(INVALID_FILENAME_CHARS)}]")
 BILIBILI_CACHE_PREFIX = b"000000000"
 BILIBILI_CACHE_PREFIX_LEN = len(BILIBILI_CACHE_PREFIX)
 WINDOWS_RESERVED_NAMES = {
@@ -138,8 +140,7 @@ def read_metadata(cache_dir: Path) -> dict:
 
 def sanitize_filename(name: str, fallback: str) -> str:
     cleaned = (name or "").strip()
-    for char in INVALID_FILENAME_CHARS:
-        cleaned = cleaned.replace(char, "_")
+    cleaned = INVALID_FILENAME_REGEX.sub("_", cleaned)
     cleaned = " ".join(cleaned.split()).rstrip(". ")
     if not cleaned:
         cleaned = fallback

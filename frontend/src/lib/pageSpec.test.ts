@@ -1,46 +1,67 @@
 import { describe, it, expect } from 'vitest'
-import { buildPageSpecFromIndexes } from './pageSpec'
+import { parsePageSpecIndexes } from './pageSpec'
 
-describe('buildPageSpecFromIndexes', () => {
-  it('returns empty string for empty inputs', () => {
-    expect(buildPageSpecFromIndexes([], 10)).toBe('')
-    expect(buildPageSpecFromIndexes(new Set(), 10)).toBe('')
+describe('parsePageSpecIndexes', () => {
+  it('returns empty set for empty spec', () => {
+    expect(parsePageSpecIndexes('', 10)).toEqual(new Set())
+    expect(parsePageSpecIndexes('   ', 10)).toEqual(new Set())
   })
 
-  it('returns empty string when all inputs are out of bounds', () => {
-    expect(buildPageSpecFromIndexes([0, 11, -1], 10)).toBe('')
+  it('returns empty set if totalCount is <= 0', () => {
+    expect(parsePageSpecIndexes('1-5', 0)).toEqual(new Set())
+    expect(parsePageSpecIndexes('1-5', -5)).toEqual(new Set())
   })
 
-  it('returns "ALL" when inputs cover all pages', () => {
-    expect(buildPageSpecFromIndexes([1, 2, 3, 4, 5], 5)).toBe('ALL')
-    expect(buildPageSpecFromIndexes(new Set([1, 2, 3, 4, 5]), 5)).toBe('ALL')
+  it('handles "ALL" spec', () => {
+    expect(parsePageSpecIndexes('ALL', 5)).toEqual(new Set([1, 2, 3, 4, 5]))
+    expect(parsePageSpecIndexes('all', 5)).toEqual(new Set([1, 2, 3, 4, 5]))
+    expect(parsePageSpecIndexes('  AlL  ', 3)).toEqual(new Set([1, 2, 3]))
   })
 
-  it('returns "LAST" when the only input is the last page', () => {
-    expect(buildPageSpecFromIndexes([10], 10)).toBe('LAST')
-    expect(buildPageSpecFromIndexes(new Set([10]), 10)).toBe('LAST')
+  it('handles "LAST" spec', () => {
+    expect(parsePageSpecIndexes('LAST', 10)).toEqual(new Set([10]))
+    expect(parsePageSpecIndexes('last', 10)).toEqual(new Set([10]))
+    expect(parsePageSpecIndexes('  lAsT  ', 5)).toEqual(new Set([5]))
   })
 
-  it('formats consecutive ranges', () => {
-    expect(buildPageSpecFromIndexes([1, 2, 3], 10)).toBe('1-3')
-    expect(buildPageSpecFromIndexes([5, 6, 7, 8], 10)).toBe('5-8')
+  it('parses single indexes', () => {
+    expect(parsePageSpecIndexes('1', 10)).toEqual(new Set([1]))
+    expect(parsePageSpecIndexes('3', 10)).toEqual(new Set([3]))
+    expect(parsePageSpecIndexes('1, 3, 5', 10)).toEqual(new Set([1, 3, 5]))
   })
 
-  it('formats individual unconnected numbers', () => {
-    expect(buildPageSpecFromIndexes([1, 3, 5], 10)).toBe('1,3,5')
+  it('ignores single indexes out of bounds', () => {
+    expect(parsePageSpecIndexes('0, 11', 10)).toEqual(new Set())
+    expect(parsePageSpecIndexes('1, 15', 10)).toEqual(new Set([1]))
   })
 
-  it('formats mixed ranges and unconnected numbers', () => {
-    expect(buildPageSpecFromIndexes([1, 2, 3, 5, 7, 8, 9], 10)).toBe('1-3,5,7-9')
-    expect(buildPageSpecFromIndexes([1, 4, 5, 6, 9], 10)).toBe('1,4-6,9')
+  it('parses ranges', () => {
+    expect(parsePageSpecIndexes('1-3', 10)).toEqual(new Set([1, 2, 3]))
+    expect(parsePageSpecIndexes('2-5', 10)).toEqual(new Set([2, 3, 4, 5]))
   })
 
-  it('sorts unordered inputs', () => {
-    expect(buildPageSpecFromIndexes([3, 1, 2], 10)).toBe('1-3')
-    expect(buildPageSpecFromIndexes([9, 5, 7, 1, 8, 2, 3], 10)).toBe('1-3,5,7-9')
+  it('parses reversed ranges automatically', () => {
+    expect(parsePageSpecIndexes('3-1', 10)).toEqual(new Set([1, 2, 3]))
+    expect(parsePageSpecIndexes('5-2', 10)).toEqual(new Set([2, 3, 4, 5]))
   })
 
-  it('filters out out-of-bounds inputs and duplicates', () => {
-    expect(buildPageSpecFromIndexes([-1, 0, 1, 2, 2, 3, 11, 12], 10)).toBe('1-3')
+  it('ignores out of bound values in ranges', () => {
+    expect(parsePageSpecIndexes('0-2', 10)).toEqual(new Set([1, 2]))
+    expect(parsePageSpecIndexes('9-12', 10)).toEqual(new Set([9, 10]))
+    expect(parsePageSpecIndexes('15-20', 10)).toEqual(new Set())
+  })
+
+  it('handles combination of single indexes, ranges, and LAST', () => {
+    expect(parsePageSpecIndexes('1, 3-5, LAST', 10)).toEqual(new Set([1, 3, 4, 5, 10]))
+    expect(parsePageSpecIndexes('1,3-5,LAST', 10)).toEqual(new Set([1, 3, 4, 5, 10]))
+  })
+
+  it('handles invalid segments gracefully', () => {
+    expect(parsePageSpecIndexes('abc, 1, def, 3', 10)).toEqual(new Set([1, 3]))
+    expect(parsePageSpecIndexes('1-abc, 2', 10)).toEqual(new Set([2]))
+  })
+
+  it('deduplicates indexes', () => {
+    expect(parsePageSpecIndexes('1, 1, 1-3, 2-4', 10)).toEqual(new Set([1, 2, 3, 4]))
   })
 })
