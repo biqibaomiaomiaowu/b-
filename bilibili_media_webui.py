@@ -66,8 +66,8 @@ QUALITY_OPTIONS = [
     "480P 清晰",
     "360P 流畅",
 ]
-QUALITY_PARSE_PATTERNS = [
-    re.compile(re.escape(quality))
+VALID_QUALITIES = [
+    quality
     for quality in QUALITY_OPTIONS
     if quality != "自动（最高可用）"
 ]
@@ -1543,15 +1543,7 @@ def run_subprocess(
 
 
 def extract_qualities(text: str) -> list[str]:
-    qualities: list[str] = []
-    seen: set[str] = set()
-    for pattern in QUALITY_PARSE_PATTERNS:
-        for match in pattern.finditer(text):
-            quality = match.group(0)
-            if quality not in seen:
-                seen.add(quality)
-                qualities.append(quality)
-    return qualities
+    return [q for q in VALID_QUALITIES if q in text]
 
 
 def format_duration_text(seconds: int | float | str | None) -> str:
