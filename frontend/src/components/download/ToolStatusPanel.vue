@@ -38,13 +38,14 @@ const bannerKind = computed(() => {
 
     <v-row dense>
       <v-col v-for="tool in tools" :key="tool.key" cols="12" sm="6" lg="4">
-        <v-card variant="flat" class="bg-surface-variant pa-3 h-100 rounded d-flex flex-column">
+        <v-card variant="flat" class="bg-surface-light pa-3 h-100 rounded d-flex flex-column border">
           <div class="d-flex justify-space-between align-start mb-1">
             <span class="font-weight-bold text-body-2">{{ tool.label || tool.key }}</span>
             <v-chip
-              size="x-small"
+              size="small"
               :color="tool.found ? 'success' : 'warning'"
               variant="flat"
+              class="px-2"
             >
               {{ tool.found ? `已找到 · ${tool.source || 'detected'}` : '未找到' }}
             </v-chip>

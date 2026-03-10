@@ -22,9 +22,9 @@ const emit = defineEmits<{
         <div class="text-caption text-medium-emphasis">登录信息会从 BBDown 的数据文件读取。</div>
       </div>
       <v-chip
-        size="small"
         :color="props.loginStatus.logged_in ? 'success' : 'warning'"
         variant="tonal"
+        class="px-3"
       >
         {{ props.loginStatus.logged_in ? '已登录' : '未登录' }}
       </v-chip>
@@ -32,25 +32,25 @@ const emit = defineEmits<{
 
     <v-row dense class="mb-3">
       <v-col cols="6">
-        <v-card variant="flat" class="bg-surface-variant pa-2 rounded text-center">
+        <v-card variant="flat" class="bg-surface-light pa-2 rounded text-center border">
           <div class="text-caption text-medium-emphasis">账号昵称</div>
           <div class="text-body-2 font-weight-bold text-truncate" :title="props.loginStatus.account_name || '-'">{{ props.loginStatus.account_name || '-' }}</div>
         </v-card>
       </v-col>
       <v-col cols="6">
-        <v-card variant="flat" class="bg-surface-variant pa-2 rounded text-center">
+        <v-card variant="flat" class="bg-surface-light pa-2 rounded text-center border">
           <div class="text-caption text-medium-emphasis">UID</div>
           <div class="text-body-2 font-weight-bold text-truncate" :title="props.loginStatus.uid || '-'">{{ props.loginStatus.uid || '-' }}</div>
         </v-card>
       </v-col>
       <v-col cols="6">
-        <v-card variant="flat" class="bg-surface-variant pa-2 rounded text-center">
+        <v-card variant="flat" class="bg-surface-light pa-2 rounded text-center border">
           <div class="text-caption text-medium-emphasis">登录类型</div>
           <div class="text-body-2 font-weight-bold">{{ props.loginStatus.login_type || '-' }}</div>
         </v-card>
       </v-col>
       <v-col cols="6">
-        <v-card variant="flat" class="bg-surface-variant pa-2 rounded text-center">
+        <v-card variant="flat" class="bg-surface-light pa-2 rounded text-center border">
           <div class="text-caption text-medium-emphasis">过期时间</div>
           <div class="text-body-2 font-weight-bold">{{ props.loginStatus.expires_at || '-' }}</div>
         </v-card>

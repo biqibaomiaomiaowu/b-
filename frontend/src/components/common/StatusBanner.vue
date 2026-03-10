@@ -8,36 +8,23 @@ const props = defineProps<{
   kind?: StatusKind
 }>()
 
-const bannerClassName = computed(() => ['status-banner', props.kind ? `is-${props.kind}` : ''].filter(Boolean).join(' '))
+const alertType = computed(() => {
+  if (props.kind === 'ok') return 'success'
+  if (props.kind === 'warn') return 'warning'
+  if (props.kind === 'error') return 'error'
+  return 'info'
+})
 </script>
 
 <template>
-  <div :class="bannerClassName">
-    {{ text }}
-  </div>
+  <v-alert
+    :type="alertType"
+    :text="text"
+    variant="tonal"
+    density="compact"
+    class="text-body-2"
+  ></v-alert>
 </template>
 
 <style scoped>
-.status-banner {
-  border-radius: 16px;
-  padding: 12px 14px;
-  background: rgba(0, 87, 217, 0.1);
-  color: var(--text);
-  line-height: 1.6;
-}
-
-.is-ok {
-  background: rgba(29, 138, 82, 0.12);
-  color: var(--ok);
-}
-
-.is-warn {
-  background: rgba(185, 121, 16, 0.12);
-  color: var(--warn);
-}
-
-.is-error {
-  background: rgba(193, 59, 45, 0.12);
-  color: var(--error);
-}
 </style>

@@ -42,7 +42,7 @@ const combinedLog = computed(() => [props.result.stdout, props.result.stderr].fi
         <StatusBanner :text="statusText" :kind="statusKind" />
       </div>
 
-      <div class="d-flex align-center gap-2 mb-3 bg-surface-variant rounded-pill px-3 py-1 align-self-start">
+      <div class="d-flex align-center gap-2 mb-3 bg-surface-light border rounded-pill px-3 py-1 align-self-start">
         <div class="terminal-dot bg-error"></div>
         <div class="terminal-dot bg-warning"></div>
         <div class="terminal-dot bg-success"></div>
@@ -51,19 +51,19 @@ const combinedLog = computed(() => [props.result.stdout, props.result.stderr].fi
 
       <v-row dense class="mb-4 flex-shrink-0">
         <v-col cols="12" sm="4">
-          <v-card variant="outlined" class="pa-2 h-100 rounded bg-surface-variant">
+          <v-card variant="outlined" class="pa-2 h-100 rounded bg-surface-light border">
             <div class="text-caption text-medium-emphasis mb-1">命令</div>
             <div class="text-body-2 font-weight-bold" style="word-break: break-all;">{{ result.command || '-' }}</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="4">
-          <v-card variant="outlined" class="pa-2 h-100 rounded bg-surface-variant">
+          <v-card variant="outlined" class="pa-2 h-100 rounded bg-surface-light border">
             <div class="text-caption text-medium-emphasis mb-1">退出码</div>
             <div class="text-body-2 font-weight-bold">{{ result.returncode ?? '-' }}</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="4">
-          <v-card variant="outlined" class="pa-2 h-100 rounded bg-surface-variant">
+          <v-card variant="outlined" class="pa-2 h-100 rounded bg-surface-light border">
             <div class="text-caption text-medium-emphasis mb-1">时间</div>
             <div class="text-body-2 font-weight-bold">{{ result.finished_at || '-' }}</div>
           </v-card>

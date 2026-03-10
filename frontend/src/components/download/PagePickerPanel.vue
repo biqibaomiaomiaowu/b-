@@ -88,7 +88,7 @@ function invertSelection() {
         <v-card
           variant="flat"
           class="pa-2 h-100 rounded border picker-item"
-          :class="{'border-primary bg-primary-subtle': selectedIndexes.has(item.index), 'bg-surface-variant': !selectedIndexes.has(item.index)}"
+          :class="{'border-primary bg-primary-subtle': selectedIndexes.has(item.index), 'bg-surface-light': !selectedIndexes.has(item.index)}"
           @click="handleCheckboxChange(item.index, { target: { checked: !selectedIndexes.has(item.index) } } as any)"
           style="cursor: pointer;"
         >

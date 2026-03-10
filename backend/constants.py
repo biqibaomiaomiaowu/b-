@@ -84,6 +84,6 @@ TOOL_FIELD_BINDINGS = {
 }
 
 PAGE_LINE_PATTERNS = [
-    re.compile(r"^\s*\[P(\d+)\]\s+(.+)$"),
-    re.compile(r"^\s*-\s+(\d+)\.\s+(.+)$"),
+    re.compile(r"^\s*\[P(?P<index>\d+)\]\s+(?P<title>.+)$"),
+    re.compile(r"^\s*-\s+(?P<index>\d+)\.\s+(?P<title>.+)$"),
 ]

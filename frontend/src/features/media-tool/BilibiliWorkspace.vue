@@ -444,9 +444,9 @@ onMounted(() => {
             基于 Vite 的 Vue 3 前端界面，后端专注于本地化工具检测、任务调度与下载代理。极简设计风格，专注核心功能。
           </p>
           <div class="d-flex flex-wrap gap-2">
-            <v-chip color="primary" variant="flat" size="small">本地执行</v-chip>
-            <v-chip variant="outlined" size="small">工具自动探测</v-chip>
-            <v-chip variant="outlined" size="small">极简设计</v-chip>
+            <v-chip color="primary" variant="flat" class="px-3">本地执行</v-chip>
+            <v-chip variant="outlined" class="px-3">工具自动探测</v-chip>
+            <v-chip variant="outlined" class="px-3">极简设计</v-chip>
           </div>
         </v-col>
 
