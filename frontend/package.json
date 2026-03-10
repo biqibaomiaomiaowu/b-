@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run"
+    "test": "vitest"
   },
   "dependencies": {
     "vue": "^3.5.0"
