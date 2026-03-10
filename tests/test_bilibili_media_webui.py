@@ -2,7 +2,7 @@ import pytest
 import re
 from unittest.mock import patch
 
-from bilibili_media_webui import extract_qualities
+from backend.bilibili import extract_qualities
 
 def test_extract_qualities_empty():
     """Test extracting from empty string or string without matches."""
@@ -24,23 +24,16 @@ def test_extract_qualities_duplicates():
 
 def test_extract_qualities_order():
     """
-    Test that qualities are ordered according to QUALITY_PARSE_PATTERNS.
-    If 1080P appears before 720P in the string but 720P is first in PATTERNS (or vice versa),
-    it should follow PATTERNS order.
-    By default, "1080P 高清" comes before "720P 高清".
+    Test that qualities are ordered according to VALID_QUALITIES order.
+    If 1080P appears before 720P in the string but 1080P is first in VALID_QUALITIES,
+    it should follow VALID_QUALITIES order.
     """
     # 720P is first in text, 1080P is second
-    # However, since QUALITY_PARSE_PATTERNS searches for 1080P before 720P,
-    # 1080P will be added to the list first.
     assert extract_qualities("720P 高清 和 1080P 高清") == ["1080P 高清", "720P 高清"]
 
-@patch('bilibili_media_webui.QUALITY_PARSE_PATTERNS', [
-    re.compile(re.escape("Quality A")),
-    re.compile(re.escape("Quality B")),
-    re.compile(re.escape("Quality C"))
-])
+@patch('backend.bilibili.VALID_QUALITIES', ["Quality A", "Quality B", "Quality C"])
 def test_extract_qualities_mocked():
-    """Test with a mocked list of patterns to ensure the underlying logic works."""
+    """Test with a mocked list of valid qualities to ensure the underlying logic works."""
     # Test deduplication and order
     text = "Here is Quality C, Quality B, and Quality A and Quality B again."
     # Patterns order is A, B, C. So it should find A, then B, then C.
