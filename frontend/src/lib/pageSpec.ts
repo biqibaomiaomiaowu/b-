@@ -60,7 +60,7 @@ export function parsePageSpecIndexes(spec: string, totalCount: number): Set<numb
 }
 
 export function buildPageSpecFromIndexes(indexes: Iterable<number>, totalCount: number): string {
-  const sorted = Array.from(indexes)
+  const sorted = Array.from(new Set(indexes))
     .filter((value) => value >= 1 && value <= totalCount)
     .sort((left, right) => left - right)
 
