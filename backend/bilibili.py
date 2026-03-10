@@ -474,7 +474,7 @@ def build_bbdown_command(payload: dict, url: str, for_info: bool = False) -> tup
     else:
         quality = str(payload.get("quality", "")).strip()
         if quality:
-            command.extend(["-tv", quality])
+            command.extend(["--dfn-priority", quality])
 
     opts = extend_bbdown_options(command, payload, for_info=for_info)
     if "work_dir" in opts:
@@ -617,6 +617,9 @@ def start_bbdown_login_process(bbdown_path: str, mode: str) -> dict[str, object]
         command.append("-tv")
 
     import subprocess
+    import os
+    import sys
+    import shutil
     env = build_process_env(prefer_system_dotnet=True, disable_proxy=True)
     if os.name == "nt":
         subprocess.Popen(

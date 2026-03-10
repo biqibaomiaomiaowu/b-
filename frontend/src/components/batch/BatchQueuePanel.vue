@@ -22,7 +22,7 @@ const emit = defineEmits<{
           <div class="text-h6 font-weight-bold">批量任务队列</div>
           <div class="text-body-2 text-medium-emphasis mt-1">适合整理一组链接连续执行，保留统一日志，减少重复粘贴与逐条确认。</div>
         </div>
-        <v-chip size="small" color="orange-darken-3" variant="tonal" class="font-weight-bold">顺序执行</v-chip>
+        <v-chip color="orange-darken-3" variant="tonal" class="font-weight-bold px-3">顺序执行</v-chip>
       </div>
 
       <v-form @submit.prevent="emit('run')">

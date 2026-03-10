@@ -22,7 +22,7 @@ const emit = defineEmits<{
           <div class="text-h6 font-weight-bold">缓存目录转 MP4</div>
           <div class="text-body-2 text-medium-emphasis mt-1">适合把手机或客户端缓存目录快速整理成可直接播放、归档的 MP4 文件。</div>
         </div>
-        <v-chip size="small" color="primary" variant="tonal" class="font-weight-bold">本地转换</v-chip>
+        <v-chip color="primary" variant="tonal" class="font-weight-bold px-3">本地转换</v-chip>
       </div>
 
       <v-form @submit.prevent="emit('run')">

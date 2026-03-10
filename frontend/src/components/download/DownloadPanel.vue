@@ -64,7 +64,7 @@ function toggleAdvancedMode() {
           <div class="text-h6 font-weight-bold">视频链接下载</div>
           <div class="text-body-2 text-medium-emphasis mt-1">围绕 BBDown 的单链接工作流，覆盖账号状态、清晰度、分 P 与高级参数。</div>
         </div>
-        <v-chip size="small" color="primary" variant="tonal" class="font-weight-bold">BBDown 工作流</v-chip>
+        <v-chip color="primary" variant="tonal" class="font-weight-bold px-3">BBDown 工作流</v-chip>
       </div>
 
       <LoginStatusCard

@@ -34,7 +34,7 @@ if FRONTEND_DIST_DIR.is_dir():
 
     @app.get("/")
     @app.get("/{catchall:path}")
-    def serve_frontend():
+    def serve_frontend(catchall: str = ""):
         return FileResponse(FRONTEND_DIST_DIR / "index.html")
 
 def parse_args() -> argparse.Namespace:
