@@ -2,7 +2,7 @@ import pytest
 import re
 from unittest.mock import patch
 
-from bilibili_media_webui import extract_qualities
+from backend.bilibili import extract_qualities
 
 def test_extract_qualities_empty():
     """Test extracting from empty string or string without matches."""
@@ -31,7 +31,7 @@ def test_extract_qualities_order():
     # 720P is first in text, 1080P is second
     assert extract_qualities("720P 高清 和 1080P 高清") == ["1080P 高清", "720P 高清"]
 
-@patch('bilibili_media_webui.VALID_QUALITIES', ["Quality A", "Quality B", "Quality C"])
+@patch('backend.bilibili.VALID_QUALITIES', ["Quality A", "Quality B", "Quality C"])
 def test_extract_qualities_mocked():
     """Test with a mocked list of valid qualities to ensure the underlying logic works."""
     # Test deduplication and order
