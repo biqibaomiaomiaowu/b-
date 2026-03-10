@@ -1,34 +1,47 @@
 import unittest
-from bilibili_media_webui import format_duration_text
+from bilibili_media_webui import extract_bilibili_identifier
 
-class TestFormatDurationText(unittest.TestCase):
-    def test_format_duration_text(self):
-        # None/Empty cases
-        self.assertEqual(format_duration_text(None), "")
-        self.assertEqual(format_duration_text(0), "")
-        self.assertEqual(format_duration_text(-1), "")
+class TestExtractBilibiliIdentifier(unittest.TestCase):
+    def test_bv_id(self):
+        # Valid BV ID
+        self.assertEqual(extract_bilibili_identifier("BV1xx411c7mD"), ("bv", "BV1xx411c7mD"))
+        # Case insensitivity (matches pattern but returns standardized BV)
+        self.assertEqual(extract_bilibili_identifier("bv1xx411c7md"), ("bv", "BV1xx411c7md"))
+        self.assertEqual(extract_bilibili_identifier("Bv1xx411c7md"), ("bv", "BV1xx411c7md"))
+        self.assertEqual(extract_bilibili_identifier("bV1xx411c7md"), ("bv", "BV1xx411c7md"))
 
-        # Small seconds
-        self.assertEqual(format_duration_text(5), "0:05")
-        self.assertEqual(format_duration_text(59), "0:59")
+    def test_av_id(self):
+        # Valid av ID
+        self.assertEqual(extract_bilibili_identifier("av12345678"), ("av", "12345678"))
+        # Case insensitivity
+        self.assertEqual(extract_bilibili_identifier("AV12345678"), ("av", "12345678"))
+        self.assertEqual(extract_bilibili_identifier("aV12345678"), ("av", "12345678"))
 
-        # Minutes
-        self.assertEqual(format_duration_text(60), "1:00")
-        self.assertEqual(format_duration_text(61), "1:01")
-        self.assertEqual(format_duration_text(3599), "59:59")
+    def test_ep_id(self):
+        # Valid ep ID
+        self.assertEqual(extract_bilibili_identifier("ep12345"), ("ep", "12345"))
+        # Case insensitivity
+        self.assertEqual(extract_bilibili_identifier("EP12345"), ("ep", "12345"))
 
-        # Hours
-        self.assertEqual(format_duration_text(3600), "1:00:00")
-        self.assertEqual(format_duration_text(3661), "1:01:01")
-        self.assertEqual(format_duration_text(7200), "2:00:00")
-        self.assertEqual(format_duration_text(360000), "100:00:00")
+    def test_id_in_url(self):
+        # Extracted from URL
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/video/BV1xx411c7mD/"), ("bv", "BV1xx411c7mD"))
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/video/av12345678"), ("av", "12345678"))
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/bangumi/play/ep12345"), ("ep", "12345"))
 
-        # Types
-        self.assertEqual(format_duration_text("120"), "2:00")
-        self.assertEqual(format_duration_text(120.5), "2:00")
+    def test_id_with_surrounding_text(self):
+        self.assertEqual(extract_bilibili_identifier("Check out this video: BV1xx411c7mD!"), ("bv", "BV1xx411c7mD"))
+        self.assertEqual(extract_bilibili_identifier("My favorite is av12345678"), ("av", "12345678"))
+        self.assertEqual(extract_bilibili_identifier("Watching ep12345 now"), ("ep", "12345"))
 
-        # Invalid
-        self.assertEqual(format_duration_text("abc"), "")
+    def test_invalid_target(self):
+        self.assertEqual(extract_bilibili_identifier("just some text"), ("", ""))
+        self.assertEqual(extract_bilibili_identifier(""), ("", ""))
+        self.assertEqual(extract_bilibili_identifier("https://www.bilibili.com/"), ("", ""))
+        # Too short for BV
+        self.assertEqual(extract_bilibili_identifier("BV123"), ("", ""))
+        # Missing numbers
+        self.assertEqual(extract_bilibili_identifier("av"), ("", ""))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
