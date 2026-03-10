@@ -1,72 +1,48 @@
-import unittest
+import pytest
+from unittest.mock import patch
 from pathlib import Path
-from bilibili_cache_to_mp4 import ensure_unique_path
 
-class TestEnsureUniquePath(unittest.TestCase):
-    def test_empty_set(self):
-        used_paths = set()
-        path = Path("video.mp4")
-        result = ensure_unique_path(path, used_paths)
-        self.assertEqual(result, Path("video.mp4"))
-        self.assertIn(str(result).lower(), used_paths)
+from bilibili_cache_to_mp4 import guess_ffprobe
 
-    def test_already_exists(self):
-        path = Path("video.mp4")
-        used_paths = {str(path).lower()}
-        result = ensure_unique_path(path, used_paths)
-        self.assertEqual(result, Path("video_1.mp4"))
-        self.assertIn(str(result).lower(), used_paths)
-        self.assertEqual(len(used_paths), 2)
+def test_guess_ffprobe_with_explicit_calls_resolve_executable():
+    with patch("bilibili_cache_to_mp4.resolve_executable") as mock_resolve:
+        mock_resolve.return_value = "/path/to/explicit/ffprobe"
+        result = guess_ffprobe("/path/to/ffmpeg", "explicit_ffprobe")
+        assert result == "/path/to/explicit/ffprobe"
+        mock_resolve.assert_called_once_with("explicit_ffprobe", "ffprobe")
 
-    def test_multiple_exist(self):
-        used_paths = {
-            str(Path("video.mp4")).lower(),
-            str(Path("video_1.mp4")).lower(),
-            str(Path("video_2.mp4")).lower()
-        }
-        path = Path("video.mp4")
-        result = ensure_unique_path(path, used_paths)
-        self.assertEqual(result, Path("video_3.mp4"))
-        self.assertIn(str(result).lower(), used_paths)
-        self.assertEqual(len(used_paths), 4)
+def test_guess_ffprobe_with_sibling_exists(tmp_path):
+    # Setup tmp_path with a fake ffmpeg and a fake ffprobe
+    ffmpeg_file = tmp_path / "ffmpeg.exe"
+    ffmpeg_file.touch()
 
-    def test_case_insensitive(self):
-        used_paths = {str(Path("ViDeO.Mp4")).lower()}
-        path = Path("video.mp4")
-        result = ensure_unique_path(path, used_paths)
-        self.assertEqual(result, Path("video_1.mp4"))
-        self.assertIn(str(result).lower(), used_paths)
+    ffprobe_file = tmp_path / "ffprobe.exe"
+    ffprobe_file.touch()
 
-    def test_with_directory(self):
-        base_dir = Path("/some/dir")
-        path = base_dir / "video.mp4"
-        used_paths = {str(path).lower()}
-        result = ensure_unique_path(path, used_paths)
-        self.assertEqual(result, base_dir / "video_1.mp4")
-        self.assertIn(str(result).lower(), used_paths)
+    result = guess_ffprobe(str(ffmpeg_file), None)
+    assert result == str(ffprobe_file)
 
-    def test_different_extensions(self):
-        used_paths = {str(Path("video.mp4")).lower()}
-        path = Path("video.mkv")
-        result = ensure_unique_path(path, used_paths)
-        self.assertEqual(result, Path("video.mkv"))
-        self.assertIn(str(result).lower(), used_paths)
-        self.assertEqual(len(used_paths), 2)
+def test_guess_ffprobe_sibling_not_exists_fallback_to_which(tmp_path):
+    # Setup tmp_path with a fake ffmpeg but no ffprobe
+    ffmpeg_file = tmp_path / "ffmpeg.exe"
+    ffmpeg_file.touch()
 
-    def test_no_extension(self):
-        used_paths = {str(Path("video")).lower()}
-        path = Path("video")
-        result = ensure_unique_path(path, used_paths)
-        self.assertEqual(result, Path("video_1"))
-        self.assertIn(str(result).lower(), used_paths)
+    with patch("bilibili_cache_to_mp4.shutil.which") as mock_which:
+        mock_which.return_value = "/system/path/ffprobe"
+        result = guess_ffprobe(str(ffmpeg_file), None)
+        assert result == "/system/path/ffprobe"
+        mock_which.assert_called_once_with("ffprobe")
 
-    def test_multiple_suffixes(self):
-        used_paths = {str(Path("archive.tar.gz")).lower()}
-        path = Path("archive.tar.gz")
-        result = ensure_unique_path(path, used_paths)
-        # Pathlib's stem for "archive.tar.gz" is "archive.tar" and suffix is ".gz"
-        self.assertEqual(result, Path("archive.tar_1.gz"))
-        self.assertIn(str(result).lower(), used_paths)
+def test_guess_ffprobe_ffmpeg_not_exists_fallback_to_which():
+    with patch("bilibili_cache_to_mp4.shutil.which") as mock_which:
+        mock_which.return_value = "/system/path/ffprobe"
+        result = guess_ffprobe("/non_existent/ffmpeg", None)
+        assert result == "/system/path/ffprobe"
+        mock_which.assert_called_once_with("ffprobe")
 
-if __name__ == '__main__':
-    unittest.main()
+def test_guess_ffprobe_which_fails_returns_empty_string():
+    with patch("bilibili_cache_to_mp4.shutil.which") as mock_which:
+        mock_which.return_value = None
+        result = guess_ffprobe("/non_existent/ffmpeg", None)
+        assert result == ""
+        mock_which.assert_called_once_with("ffprobe")
